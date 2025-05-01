@@ -5,7 +5,7 @@ export default function ContactPage() {
   return (
     <div className="container mx-auto py-12 px-4">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-center">Contact Us</h1>
+        <h1 className="text-3xl font-extralight mb-8 text-center">Contact Us</h1>
 
         <div
           style={{
@@ -18,17 +18,17 @@ export default function ContactPage() {
             <div className="flex items-start gap-4">
               <Mail className="h-5 w-5 text-teal-600 dark:text-teal-400 mt-1" />
               <div>
-                <h2 className="font-medium mb-1">Email Us for any queries/suggestions.</h2>
+                <h2 className="font-extralight mb-1">Email Us for any queries/suggestions.</h2>
                 <a
                   href="mailto:contact@example.com"
-                  className="text-teal-600 dark:text-teal-400 hover:underline"
+                  className="text-teal-600 dark:text-teal-400 hover:underline font-extralight"
                 >
                   23r21a1285@mlrit.ac.in                  
                 </a>
                 <div></div>
                 <a
                   href="mailto:contact@example.com"
-                  className="text-teal-600 dark:text-teal-400 hover:underline"
+                  className="text-teal-600 dark:text-teal-400 hover:underline font-extralight"
                 >
                   23r21a1285@mlrit.ac.in                  
                 </a>

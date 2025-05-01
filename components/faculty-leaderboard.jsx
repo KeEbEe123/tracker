@@ -121,13 +121,15 @@ export default function FacultyLeaderboard() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold">Faculty Certification Leaderboard</h1>
-        <p className="text-muted-foreground mt-2">
+    <div className="grid mx-auto py-8 px-4 ">
+      <div className="text-center mb-26">
+        <h1 className="text-3xl font-light">Faculty Certification Leaderboard</h1>
+        <p className="text-muted-foreground font-extralight mt-2">
           Recognizing excellence in professional development
         </p>
       </div>
+
+
 
       {/* Podium Section */}
       <div className="relative h-[340px] mb-16">

@@ -322,7 +322,7 @@ export default function ProfilePage() {
                 <Button
                   variant="outline"
                   onClick={() => setEditing(!editing)}
-                  className="flex items-center gap-2 dark:border-white/[0.2] dark:text-white dark:hover:bg-slate-800"
+                  className="flex items-center gap-2 bg-slate-800 text-slate-100 hover:bg-slate-700"
                 >
                   <PenLine className="h-4 w-4" />
                   {editing ? "Cancel" : "Edit Profile"}
@@ -384,7 +384,7 @@ export default function ProfilePage() {
                 />
                 <Button
                   type="submit"
-                  className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white"
+                  className="bg-slate-800 text-slate-100 hover:bg-slate-700 w-full"
                 >
                   Save Changes
                 </Button>
@@ -402,7 +402,7 @@ export default function ProfilePage() {
                   <Button
                     onClick={() => setActiveTab("view")}
                     variant={activeTab === "view" ? "default" : "outline"}
-                    className={activeTab === "view" ? "bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700" : ""}
+                    className={activeTab === "view" ? "bg-slate-800 text-slate-100 hover:bg-slate-700" : "text-slate-800 hover:bg-slate-100"}
                   >
                     View All
                   </Button>
@@ -412,7 +412,7 @@ export default function ProfilePage() {
                       setEditingCert(null);
                     }}
                     variant={activeTab === "edit" ? "default" : "outline"}
-                    className={activeTab === "edit" ? "bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700" : ""}
+                    className={activeTab === "edit" ? "bg-slate-800 text-slate-100 hover:bg-slate-700" : "text-slate-800 hover:bg-slate-100"}
                   >
                     {editingCert ? "Edit" : "Add New"}
                   </Button>
@@ -528,7 +528,7 @@ export default function ProfilePage() {
                   <Button
                     type="submit"
                     disabled={uploadingImage || !newCertification.imageUrl}
-                    className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
+                    className="w-full bg-slate-800 text-slate-100 hover:bg-slate-700 disabled:bg-slate-300 disabled:text-slate-500"
                   >
                     {uploadingImage ? (
                       <>
@@ -591,7 +591,7 @@ export default function ProfilePage() {
                                       imageUrl: cert.imageUrl,
                                     });
                                   }}
-                                  className="h-8 w-8"
+                                  className="h-8 w-8 text-slate-800 hover:bg-slate-100"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -599,7 +599,7 @@ export default function ProfilePage() {
                                   variant="outline"
                                   size="icon"
                                   onClick={() => handleDeleteCertification(cert._id)}
-                                  className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+                                  className="h-8 w-8 text-red-500 hover:bg-red-50 border-red-200 hover:border-red-300"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -658,7 +658,7 @@ export default function ProfilePage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="text-sm dark:border-white/[0.2] dark:text-white dark:hover:bg-slate-800"
+                className="text-sm bg-slate-800 text-slate-100 hover:bg-slate-700"
               >
                 Update Photo
               </Button>
