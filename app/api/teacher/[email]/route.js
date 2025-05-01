@@ -4,10 +4,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getTeacherModel } from "@/models/Teacher";
 
 // GET /api/teacher/[email] - Get a teacher profile by email
-export async function GET(request, context) {
+export async function GET(request, { params }) {
   try {
-    // Properly extract email from params in Next.js App Router
-    const email = context.params.email;
+    // Properly decode the email from URL-safe format
+    const email = decodeURIComponent(params.email);
 
     const session = await getServerSession(authOptions);
 
@@ -29,12 +29,19 @@ export async function GET(request, context) {
       );
     }
 
-    // Only return basic profile info to verify onboarding
+    // Return complete teacher data
     return NextResponse.json({
       id: teacher._id,
+      userId: teacher.userId,
       name: teacher.name,
       email: teacher.email,
       department: teacher.department,
+      contactNumber: teacher.contactNumber,
+      profilePicture: teacher.profilePicture,
+      certifications: teacher.certifications,
+      totalPoints: teacher.totalPoints,
+      createdAt: teacher.createdAt,
+      updatedAt: teacher.updatedAt,
     });
   } catch (error) {
     console.error("Error fetching teacher by email:", error);

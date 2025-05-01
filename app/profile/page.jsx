@@ -17,11 +17,17 @@ import {
   PenLine,
   Building,
   Bookmark,
+  Upload,
+  Loader2,
+  Edit,
+  Plus,
+  Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { NoCertifications } from "@/components/ui/NoCertifications";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -43,7 +49,12 @@ export default function ProfilePage() {
     expiryDate: "",
     credentialId: "",
     credentialUrl: "",
+    imageUrl: "",
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [activeTab, setActiveTab] = useState("view");
+  const [editingCert, setEditingCert] = useState(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -134,9 +145,46 @@ export default function ProfilePage() {
         expiryDate: "",
         credentialId: "",
         credentialUrl: "",
+        imageUrl: "",
       });
     } catch (error) {
       console.error("Error adding certification:", error);
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      // Create FormData
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to upload image");
+      }
+
+      const data = await res.json();
+      setNewCertification((prev) => ({ ...prev, imageUrl: data.url }));
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -161,6 +209,46 @@ export default function ProfilePage() {
       setCurrentCertIndex((prev) =>
         prev === 0 ? teacher.certifications.length - 1 : prev - 1
       );
+    }
+  };
+
+  const handleEditCertification = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/teacher/certifications/${editingCert._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newCertification),
+      });
+      const updated = await res.json();
+      setTeacher(updated);
+      setEditingCert(null);
+      setNewCertification({
+        name: "",
+        issuingOrganization: "",
+        issueDate: "",
+        expiryDate: "",
+        credentialId: "",
+        credentialUrl: "",
+        imageUrl: "",
+      });
+      setImagePreview(null);
+    } catch (error) {
+      console.error("Error updating certification:", error);
+    }
+  };
+
+  const handleDeleteCertification = async (certId) => {
+    if (!confirm("Are you sure you want to delete this certification?")) return;
+    
+    try {
+      const res = await fetch(`/api/teacher/certifications/${certId}`, {
+        method: "DELETE",
+      });
+      const updated = await res.json();
+      setTeacher(updated);
+    } catch (error) {
+      console.error("Error deleting certification:", error);
     }
   };
 
@@ -234,7 +322,7 @@ export default function ProfilePage() {
                 <Button
                   variant="outline"
                   onClick={() => setEditing(!editing)}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 dark:border-white/[0.2] dark:text-white dark:hover:bg-slate-800"
                 >
                   <PenLine className="h-4 w-4" />
                   {editing ? "Cancel" : "Edit Profile"}
@@ -303,207 +391,245 @@ export default function ProfilePage() {
               </form>
             ) : null}
 
-            {/* Add New Certification Form */}
+            {/* Certifications Section */}
             <div className="mt-8">
-              <h2 className="text-lg font-medium mb-4 flex items-center gap-2">
-                <Award className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-                Add New Certification
-              </h2>
-
-              <form
-                onSubmit={handleAddCertification}
-                className="space-y-4 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-border"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    label="Certification Name"
-                    value={newCertification.name}
-                    onChange={(e) =>
-                      setNewCertification({
-                        ...newCertification,
-                        name: e.target.value,
-                      })
-                    }
-                  />
-                  <Input
-                    label="Issuing Organization"
-                    value={newCertification.issuingOrganization}
-                    onChange={(e) =>
-                      setNewCertification({
-                        ...newCertification,
-                        issuingOrganization: e.target.value,
-                      })
-                    }
-                  />
-                  <Input
-                    label="Issue Date"
-                    type="date"
-                    value={newCertification.issueDate}
-                    onChange={(e) =>
-                      setNewCertification({
-                        ...newCertification,
-                        issueDate: e.target.value,
-                      })
-                    }
-                  />
-                  <Input
-                    label="Expiry Date"
-                    type="date"
-                    value={newCertification.expiryDate}
-                    onChange={(e) =>
-                      setNewCertification({
-                        ...newCertification,
-                        expiryDate: e.target.value,
-                      })
-                    }
-                  />
-                  <Input
-                    label="Credential ID"
-                    value={newCertification.credentialId}
-                    onChange={(e) =>
-                      setNewCertification({
-                        ...newCertification,
-                        credentialId: e.target.value,
-                      })
-                    }
-                  />
-                  <Input
-                    label="Credential URL"
-                    type="url"
-                    value={newCertification.credentialUrl}
-                    onChange={(e) =>
-                      setNewCertification({
-                        ...newCertification,
-                        credentialUrl: e.target.value,
-                      })
-                    }
-                  />
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-medium flex items-center gap-2">
+                  <Award className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                  Certifications
+                </h2>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setActiveTab("view")}
+                    variant={activeTab === "view" ? "default" : "outline"}
+                    className={activeTab === "view" ? "bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700" : ""}
+                  >
+                    View All
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setActiveTab("edit");
+                      setEditingCert(null);
+                    }}
+                    variant={activeTab === "edit" ? "default" : "outline"}
+                    className={activeTab === "edit" ? "bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700" : ""}
+                  >
+                    {editingCert ? "Edit" : "Add New"}
+                  </Button>
                 </div>
-                <Button
-                  type="submit"
-                  className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white"
+              </div>
+
+              {activeTab === "edit" ? (
+                <form
+                  onSubmit={editingCert ? handleEditCertification : handleAddCertification}
+                  className="space-y-4 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-border"
                 >
-                  Add Certification
-                </Button>
-              </form>
-            </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Certification Name *"
+                      value={newCertification.name}
+                      onChange={(e) =>
+                        setNewCertification({ ...newCertification, name: e.target.value })
+                      }
+                      required
+                    />
+                    <Input
+                      label="Issuing Organization *"
+                      value={newCertification.issuingOrganization}
+                      onChange={(e) =>
+                        setNewCertification({
+                          ...newCertification,
+                          issuingOrganization: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                    <Input
+                      label="Issue Date *"
+                      type="date"
+                      value={newCertification.issueDate}
+                      onChange={(e) =>
+                        setNewCertification({
+                          ...newCertification,
+                          issueDate: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                    <Input
+                      label="Expiry Date"
+                      type="date"
+                      value={newCertification.expiryDate}
+                      onChange={(e) =>
+                        setNewCertification({
+                          ...newCertification,
+                          expiryDate: e.target.value,
+                        })
+                      }
+                    />
+                    <Input
+                      label="Credential ID *"
+                      value={newCertification.credentialId}
+                      onChange={(e) =>
+                        setNewCertification({
+                          ...newCertification,
+                          credentialId: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                    <Input
+                      label="Credential URL *"
+                      type="url"
+                      value={newCertification.credentialUrl}
+                      onChange={(e) =>
+                        setNewCertification({
+                          ...newCertification,
+                          credentialUrl: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
 
-            {/* Certifications Carousel */}
-            <div className="mt-6">
-              <h2 className="text-lg font-medium mb-4 flex items-center gap-2">
-                <Award className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-                Your Certifications
-              </h2>
-
-              {teacher.certifications && teacher.certifications.length > 0 ? (
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={prevCertification}
-                        className="h-8 w-8 rounded-full"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        <span className="sr-only">Previous certification</span>
-                      </Button>
-
-                      <div className="text-center">
-                        <span
-                          style={{ color: "hsl(var(--muted-foreground))" }}
-                          className="text-sm"
-                        >
-                          {currentCertIndex + 1} of{" "}
-                          {teacher.certifications.length}
-                        </span>
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={nextCertification}
-                        className="h-8 w-8 rounded-full"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                        <span className="sr-only">Next certification</span>
-                      </Button>
-                    </div>
-
-                    <div className="text-center space-y-4">
-                      <div
-                        className="relative h-48 w-full mx-auto mb-4 rounded-md overflow-hidden border"
-                        style={{ borderColor: "hsl(var(--border))" }}
-                      >
-                        <Image
-                          src="/placeholder.svg?height=200&width=300"
-                          alt={`${currentCert.name} Certificate`}
-                          fill
-                          className="object-cover dark:invert"
+                  {/* Image Upload Section */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Certification Image *
+                    </label>
+                    <div className="mt-1 flex items-center gap-4">
+                      <label className="cursor-pointer">
+                        <div className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+                          <Upload className="h-4 w-4" />
+                          <span>{uploadingImage ? "Uploading..." : "Upload Image"}</span>
+                        </div>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*,.pdf"
+                          onChange={handleImageUpload}
+                          disabled={uploadingImage}
+                          required={!newCertification.imageUrl}
                         />
-                      </div>
-
-                      <h3 className="font-medium">{currentCert.name}</h3>
-                      <p
-                        style={{ color: "hsl(var(--muted-foreground))" }}
-                        className="text-sm"
-                      >
-                        {currentCert.issuingOrganization}
-                      </p>
-                      <p
-                        style={{ color: "hsl(var(--muted-foreground))" }}
-                        className="text-sm flex items-center justify-center gap-1"
-                      >
-                        <Calendar className="h-3.5 w-3.5" />
-                        Issued:{" "}
-                        {new Date(currentCert.issueDate).toLocaleDateString()}
-                      </p>
-                      {currentCert.expiryDate && (
-                        <p
-                          style={{ color: "hsl(var(--muted-foreground))" }}
-                          className="text-sm flex items-center justify-center gap-1"
-                        >
-                          <Calendar className="h-3.5 w-3.5" />
-                          Expires:{" "}
-                          {new Date(
-                            currentCert.expiryDate
-                          ).toLocaleDateString()}
-                        </p>
-                      )}
-                      {currentCert.credentialId && (
-                        <p
-                          style={{ color: "hsl(var(--muted-foreground))" }}
-                          className="text-sm flex items-center justify-center gap-1"
-                        >
-                          <Bookmark className="h-3.5 w-3.5" />
-                          ID: {currentCert.credentialId}
-                        </p>
-                      )}
-                      {currentCert.credentialUrl && (
-                        <div className="mt-2">
-                          <a
-                            href={currentCert.credentialUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 dark:text-blue-400 hover:underline"
-                          >
-                            View Certificate
-                          </a>
+                      </label>
+                      {(imagePreview || newCertification.imageUrl) && (
+                        <div className="relative w-16 h-16 rounded-lg overflow-hidden border">
+                          <Image
+                            src={imagePreview || newCertification.imageUrl}
+                            alt="Preview"
+                            fill
+                            className="object-cover"
+                          />
                         </div>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={uploadingImage || !newCertification.imageUrl}
+                    className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
+                  >
+                    {uploadingImage ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        {editingCert ? (
+                          <>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Update Certification
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Certification
+                          </>
+                        )}
+                      </>
+                    )}
+                  </Button>
+                </form>
               ) : (
-                <div
-                  className="text-center p-6 border border-dashed rounded-lg"
-                  style={{
-                    color: "hsl(var(--muted-foreground))",
-                    borderColor: "hsl(var(--border))",
-                  }}
-                >
-                  No certifications added yet. Add your first certification
-                  above.
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {teacher.certifications?.length > 0 ? (
+                    teacher.certifications.map((cert, index) => (
+                      <Card key={cert._id || index} className="overflow-hidden">
+                        <CardContent className="p-0">
+                          <div className="relative h-40 w-full">
+                            <Image
+                              src={cert.imageUrl || "/placeholder.svg?height=200&width=300"}
+                              alt={cert.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <div className="p-4">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h3 className="font-medium">{cert.name}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {cert.issuingOrganization}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => {
+                                    setActiveTab("edit");
+                                    setEditingCert(cert);
+                                    setNewCertification({
+                                      name: cert.name,
+                                      issuingOrganization: cert.issuingOrganization,
+                                      issueDate: cert.issueDate.split("T")[0],
+                                      expiryDate: cert.expiryDate?.split("T")[0] || "",
+                                      credentialId: cert.credentialId,
+                                      credentialUrl: cert.credentialUrl,
+                                      imageUrl: cert.imageUrl,
+                                    });
+                                  }}
+                                  className="h-8 w-8"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleDeleteCertification(cert._id)}
+                                  className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+                              <p className="flex items-center gap-1">
+                                <Calendar className="h-3.5 w-3.5" />
+                                Issued: {new Date(cert.issueDate).toLocaleDateString()}
+                              </p>
+                              {cert.expiryDate && (
+                                <p className="flex items-center gap-1">
+                                  <Calendar className="h-3.5 w-3.5" />
+                                  Expires: {new Date(cert.expiryDate).toLocaleDateString()}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <NoCertifications 
+                      showAddButton 
+                      onAddClick={() => {
+                        setActiveTab("edit");
+                        setEditingCert(null);
+                      }}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -520,16 +646,20 @@ export default function ProfilePage() {
               className="relative w-48 h-48 rounded-full overflow-hidden border-4"
             >
               <Image
-                src="/placeholder.svg?height=192&width=192"
+                src={teacher.profilePicture || "/placeholder.svg?height=192&width=192"}
                 alt="Profile picture"
                 fill
-                className="object-cover dark:invert"
+                className="object-cover"
                 priority
               />
             </div>
 
             <div className="mt-4 text-center">
-              <Button variant="outline" size="sm" className="text-sm">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm dark:border-white/[0.2] dark:text-white dark:hover:bg-slate-800"
+              >
                 Update Photo
               </Button>
             </div>
@@ -563,7 +693,7 @@ export default function ProfilePage() {
                       </span>
                     </div>
                     <Progress
-                      value={teacher.totalPoints || 0}
+                      value={(teacher.totalPoints || 0) / 2}
                       className="h-2"
                       indicatorClassName="bg-teal-500 dark:bg-teal-400"
                     />
@@ -579,11 +709,14 @@ export default function ProfilePage() {
                         className="font-medium"
                         style={{ color: "hsl(var(--foreground))" }}
                       >
-                        {teacher.certifications
-                          ? teacher.certifications.length
-                          : 0}
+                        {teacher.certifications?.length || 0}
                       </span>
                     </div>
+                    <Progress
+                      value={(teacher.certifications?.length || 0) * 10}
+                      className="h-2"
+                      indicatorClassName="bg-teal-500 dark:bg-teal-400"
+                    />
                   </div>
                 </div>
               </div>

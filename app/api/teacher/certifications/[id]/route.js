@@ -3,8 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getTeacherModel } from "@/models/Teacher";
 
-// POST /api/teacher/certifications - Add a new certification
-export async function POST(request) {
+// PATCH /api/teacher/certifications/[id] - Update a certification
+export async function PATCH(request, context) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -12,6 +12,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    const certId = context.params.id;
     const data = await request.json();
     const TeacherModel = await getTeacherModel();
 
@@ -24,30 +25,35 @@ export async function POST(request) {
       );
     }
 
-    // Validate required fields
-    if (!data.name || !data.issuingOrganization || !data.issueDate) {
+    // Find and update the certification
+    const certIndex = teacher.certifications.findIndex(
+      (cert) => cert._id.toString() === certId
+    );
+
+    if (certIndex === -1) {
       return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
+        { error: "Certification not found" },
+        { status: 404 }
       );
     }
 
-    // Add new certification
-    teacher.certifications.push({
+    // Update certification fields
+    teacher.certifications[certIndex] = {
+      ...teacher.certifications[certIndex],
       name: data.name,
       issuingOrganization: data.issuingOrganization,
       issueDate: data.issueDate,
       expiryDate: data.expiryDate || null,
-      credentialId: data.credentialId || null,
-      credentialUrl: data.credentialUrl || null,
-      imageUrl: data.imageUrl || null,
-    });
+      credentialId: data.credentialId,
+      credentialUrl: data.credentialUrl,
+      imageUrl: data.imageUrl,
+    };
 
     await teacher.save();
 
     return NextResponse.json(teacher);
   } catch (error) {
-    console.error("Error adding certification:", error);
+    console.error("Error updating certification:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -55,8 +61,8 @@ export async function POST(request) {
   }
 }
 
-// GET /api/teacher/certifications - Get all certifications for the current user
-export async function GET(request) {
+// DELETE /api/teacher/certifications/[id] - Delete a certification
+export async function DELETE(request, context) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -64,7 +70,9 @@ export async function GET(request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    const certId = context.params.id;
     const TeacherModel = await getTeacherModel();
+
     const teacher = await TeacherModel.findOne({ userId: session.user.id });
 
     if (!teacher) {
@@ -74,12 +82,19 @@ export async function GET(request) {
       );
     }
 
-    return NextResponse.json(teacher.certifications);
+    // Remove the certification
+    teacher.certifications = teacher.certifications.filter(
+      (cert) => cert._id.toString() !== certId
+    );
+
+    await teacher.save();
+
+    return NextResponse.json(teacher);
   } catch (error) {
-    console.error("Error fetching certifications:", error);
+    console.error("Error deleting certification:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
   }
-}
+} 
