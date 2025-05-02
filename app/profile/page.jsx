@@ -174,7 +174,7 @@ export default function ProfilePage() {
 
       const data = await res.json();
       setNewCertification((prev) => ({ ...prev, imageUrl: data.url }));
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -215,11 +215,14 @@ export default function ProfilePage() {
   const handleEditCertification = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/api/teacher/certifications/${editingCert._id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newCertification),
-      });
+      const res = await fetch(
+        `/api/teacher/certifications/${editingCert._id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newCertification),
+        }
+      );
       const updated = await res.json();
       setTeacher(updated);
       setEditingCert(null);
@@ -240,7 +243,7 @@ export default function ProfilePage() {
 
   const handleDeleteCertification = async (certId) => {
     if (!confirm("Are you sure you want to delete this certification?")) return;
-    
+
     try {
       const res = await fetch(`/api/teacher/certifications/${certId}`, {
         method: "DELETE",
@@ -402,7 +405,11 @@ export default function ProfilePage() {
                   <Button
                     onClick={() => setActiveTab("view")}
                     variant={activeTab === "view" ? "default" : "outline"}
-                    className={activeTab === "view" ? "bg-slate-800 text-slate-100 hover:bg-slate-700" : "text-slate-800 hover:bg-slate-100"}
+                    className={
+                      activeTab === "view"
+                        ? "bg-slate-800 text-slate-100 hover:bg-slate-700"
+                        : "text-slate-800 hover:bg-slate-100"
+                    }
                   >
                     View All
                   </Button>
@@ -412,7 +419,11 @@ export default function ProfilePage() {
                       setEditingCert(null);
                     }}
                     variant={activeTab === "edit" ? "default" : "outline"}
-                    className={activeTab === "edit" ? "bg-slate-800 text-slate-100 hover:bg-slate-700" : "text-slate-800 hover:bg-slate-100"}
+                    className={
+                      activeTab === "edit"
+                        ? "bg-slate-800 text-slate-100 hover:bg-slate-700"
+                        : "text-slate-800 hover:bg-slate-100"
+                    }
                   >
                     {editingCert ? "Edit" : "Add New"}
                   </Button>
@@ -421,7 +432,11 @@ export default function ProfilePage() {
 
               {activeTab === "edit" ? (
                 <form
-                  onSubmit={editingCert ? handleEditCertification : handleAddCertification}
+                  onSubmit={
+                    editingCert
+                      ? handleEditCertification
+                      : handleAddCertification
+                  }
                   className="space-y-4 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-border"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -429,7 +444,10 @@ export default function ProfilePage() {
                       label="Certification Name *"
                       value={newCertification.name}
                       onChange={(e) =>
-                        setNewCertification({ ...newCertification, name: e.target.value })
+                        setNewCertification({
+                          ...newCertification,
+                          name: e.target.value,
+                        })
                       }
                       required
                     />
@@ -501,7 +519,9 @@ export default function ProfilePage() {
                       <label className="cursor-pointer">
                         <div className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
                           <Upload className="h-4 w-4" />
-                          <span>{uploadingImage ? "Uploading..." : "Upload Image"}</span>
+                          <span>
+                            {uploadingImage ? "Uploading..." : "Upload Image"}
+                          </span>
                         </div>
                         <input
                           type="file"
@@ -560,7 +580,10 @@ export default function ProfilePage() {
                         <CardContent className="p-0">
                           <div className="relative h-40 w-full">
                             <Image
-                              src={cert.imageUrl || "/placeholder.svg?height=200&width=300"}
+                              src={
+                                cert.imageUrl ||
+                                "/placeholder.svg?height=200&width=300"
+                              }
                               alt={cert.name}
                               fill
                               className="object-cover"
@@ -583,9 +606,11 @@ export default function ProfilePage() {
                                     setEditingCert(cert);
                                     setNewCertification({
                                       name: cert.name,
-                                      issuingOrganization: cert.issuingOrganization,
+                                      issuingOrganization:
+                                        cert.issuingOrganization,
                                       issueDate: cert.issueDate.split("T")[0],
-                                      expiryDate: cert.expiryDate?.split("T")[0] || "",
+                                      expiryDate:
+                                        cert.expiryDate?.split("T")[0] || "",
                                       credentialId: cert.credentialId,
                                       credentialUrl: cert.credentialUrl,
                                       imageUrl: cert.imageUrl,
@@ -598,7 +623,9 @@ export default function ProfilePage() {
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  onClick={() => handleDeleteCertification(cert._id)}
+                                  onClick={() =>
+                                    handleDeleteCertification(cert._id)
+                                  }
                                   className="h-8 w-8 text-red-500 hover:bg-red-50 border-red-200 hover:border-red-300"
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -608,12 +635,16 @@ export default function ProfilePage() {
                             <div className="mt-2 space-y-1 text-sm text-muted-foreground">
                               <p className="flex items-center gap-1">
                                 <Calendar className="h-3.5 w-3.5" />
-                                Issued: {new Date(cert.issueDate).toLocaleDateString()}
+                                Issued:{" "}
+                                {new Date(cert.issueDate).toLocaleDateString()}
                               </p>
                               {cert.expiryDate && (
                                 <p className="flex items-center gap-1">
                                   <Calendar className="h-3.5 w-3.5" />
-                                  Expires: {new Date(cert.expiryDate).toLocaleDateString()}
+                                  Expires:{" "}
+                                  {new Date(
+                                    cert.expiryDate
+                                  ).toLocaleDateString()}
                                 </p>
                               )}
                             </div>
@@ -622,8 +653,8 @@ export default function ProfilePage() {
                       </Card>
                     ))
                   ) : (
-                    <NoCertifications 
-                      showAddButton 
+                    <NoCertifications
+                      showAddButton
                       onAddClick={() => {
                         setActiveTab("edit");
                         setEditingCert(null);
@@ -646,7 +677,10 @@ export default function ProfilePage() {
               className="relative w-48 h-48 rounded-full overflow-hidden border-4"
             >
               <Image
-                src={teacher.profilePicture || "/placeholder.svg?height=192&width=192"}
+                src={
+                  teacher.profilePicture ||
+                  "/placeholder.svg?height=192&width=192"
+                }
                 alt="Profile picture"
                 fill
                 className="object-cover"
@@ -667,7 +701,6 @@ export default function ProfilePage() {
             <div className="mt-8 w-full">
               <div
                 style={{
-                  backgroundColor: "hsl(var(--muted))",
                   color: "hsl(var(--muted-foreground))",
                 }}
                 className="rounded-lg p-4 border border-border"
@@ -692,11 +725,11 @@ export default function ProfilePage() {
                         {teacher.totalPoints || 0}
                       </span>
                     </div>
-                    <Progress
+                    {/* <Progress
                       value={(teacher.totalPoints || 0) / 2}
                       className="h-2"
                       indicatorClassName="bg-teal-500 dark:bg-teal-400"
-                    />
+                    /> */}
                   </div>
 
                   <div>
@@ -712,11 +745,11 @@ export default function ProfilePage() {
                         {teacher.certifications?.length || 0}
                       </span>
                     </div>
-                    <Progress
+                    {/* <Progress
                       value={(teacher.certifications?.length || 0) * 10}
                       className="h-2"
                       indicatorClassName="bg-teal-500 dark:bg-teal-400"
-                    />
+                    /> */}
                   </div>
                 </div>
               </div>

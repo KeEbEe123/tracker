@@ -123,97 +123,140 @@ export default function FacultyLeaderboard() {
   return (
     <div className="grid mx-auto py-8 px-4 ">
       <div className="text-center mb-26">
-        <h1 className="text-3xl font-light">Faculty Certification Leaderboard</h1>
+        <h1 className="text-3xl font-light">
+          Faculty Certification Leaderboard
+        </h1>
         <p className="text-muted-foreground font-extralight mt-2">
           Recognizing excellence in professional development
         </p>
       </div>
 
-
-
       {/* Podium Section */}
       <div className="relative h-[340px] mb-16">
         {/* Second Place - Left */}
-        <div className="absolute left-0 bottom-0 w-1/3 flex flex-col items-center">
-          <div className="relative mb-3">
-            <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10">
-              <Medal className="h-10 w-10 text-gray-500 dark:text-gray-400" />
+        <div className="absolute left-[20%] bottom-0 w-1/5 flex flex-col items-center">
+          <div className="bg-card rounded-lg p-4 flex flex-col items-center mb-3">
+            <div className="relative mb-3">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10">
+                <Medal className="h-10 w-10 text-gray-500 dark:text-gray-400" />
+              </div>
+              <div
+                className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-gray-300 dark:border-gray-700 cursor-pointer transition-transform hover:scale-105"
+                onClick={() =>
+                  router.push(
+                    `/profile/${encodeURIComponent(topThree[1].email)}`
+                  )
+                }
+              >
+                <Image
+                  src={
+                    topThree[1].profilePicture ||
+                    "/placeholder.svg?height=150&width=150"
+                  }
+                  alt={topThree[1].name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
             </div>
-            <div 
-              className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-gray-300 dark:border-gray-700 cursor-pointer transition-transform hover:scale-105"
-              onClick={() => router.push(`/profile/${encodeURIComponent(topThree[1].email)}`)}
-            >
-              <Image
-                src={topThree[1].profilePicture || "/placeholder.svg?height=150&width=150"}
-                alt={topThree[1].name}
-                fill
-                className="object-cover"
-              />
-            </div>
+            <h3 className="font-semibold text-card-foreground">
+              {topThree[1].name}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {topThree[1].department}
+            </p>
+            <p className="text-sm font-medium text-teal-700 dark:text-teal-400">
+              {topThree[1].totalPoints} points
+            </p>
           </div>
-          <h3 className="font-semibold text-gray-900">{topThree[1].name}</h3>
-          <p className="text-sm text-gray-600 dark:text-muted-foreground">{topThree[1].department}</p>
-          <p className="text-sm font-medium text-teal-700 dark:text-teal-400">
-            {topThree[1].totalPoints} points
-          </p>
-          <div className="bg-gray-300 dark:bg-gray-700 h-32 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center">
-            <p className="mb-2 text-xl font-bold text-gray-800 dark:text-gray-300">2</p>
+          <div className="bg-gray-300 dark:bg-gray-700 h-32 w-full max-w-[150px] rounded-t-lg flex items-end justify-center">
+            <p className="mb-2 text-xl font-bold text-gray-800 dark:text-gray-300">
+              2
+            </p>
           </div>
         </div>
 
         {/* First Place - Center */}
-        <div className="absolute left-1/3 right-1/3 bottom-0 flex flex-col items-center">
-          <div className="relative mb-3">
-            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-10">
-              <Trophy className="h-12 w-12 text-yellow-600 dark:text-yellow-400" />
+        <div className="absolute left-[40%] w-1/5 bottom-0 flex flex-col items-center">
+          <div className="bg-card rounded-lg p-4 flex flex-col items-center mb-3">
+            <div className="relative mb-3">
+              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-10">
+                <Trophy className="h-12 w-12 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div
+                className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-300 dark:border-yellow-300 cursor-pointer transition-transform hover:scale-105"
+                onClick={() =>
+                  router.push(
+                    `/profile/${encodeURIComponent(topThree[0].email)}`
+                  )
+                }
+              >
+                <Image
+                  src={
+                    topThree[0].profilePicture ||
+                    "/placeholder.svg?height=150&width=150"
+                  }
+                  alt={topThree[0].name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
             </div>
-            <div 
-              className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-300 dark:border-yellow-900 cursor-pointer transition-transform hover:scale-105"
-              onClick={() => router.push(`/profile/${encodeURIComponent(topThree[0].email)}`)}
-            >
-              <Image
-                src={topThree[0].profilePicture || "/placeholder.svg?height=150&width=150"}
-                alt={topThree[0].name}
-                fill
-                className="object-cover"
-              />
-            </div>
+            <h3 className="font-semibold text-lg text-card-foreground">
+              {topThree[0].name}
+            </h3>
+            <p className="text-muted-foreground">{topThree[0].department}</p>
+            <p className="text-md font-medium text-teal-700 dark:text-teal-400">
+              {topThree[0].totalPoints} points
+            </p>
           </div>
-          <h3 className="font-semibold text-lg text-gray-900">{topThree[0].name}</h3>
-          <p className="text-gray-600 dark:text-muted-foreground">{topThree[0].department}</p>
-          <p className="text-md font-medium text-teal-700 dark:text-teal-400">
-            {topThree[0].totalPoints} points
-          </p>
-          <div className="bg-yellow-200 dark:bg-yellow-900/30 h-40 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center border-t-4 border-yellow-400 dark:border-yellow-600">
-            <p className="mb-2 text-2xl font-bold text-yellow-800 dark:text-yellow-400">1</p>
+          <div className="bg-yellow-200 dark:bg-yellow-900/30 h-40 w-full max-w-[150px] rounded-t-lg flex items-end justify-center border-t-4 border-yellow-400 dark:border-yellow-600">
+            <p className="mb-2 text-2xl font-bold text-yellow-800 dark:text-yellow-400">
+              1
+            </p>
           </div>
         </div>
 
         {/* Third Place - Right */}
-        <div className="absolute right-0 bottom-0 w-1/3 flex flex-col items-center">
-          <div className="relative mb-3">
-            <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10">
-              <Award className="h-10 w-10 text-amber-800 dark:text-amber-600" />
+        <div className="absolute left-[60%] w-1/5 bottom-0 flex flex-col items-center">
+          <div className="bg-card rounded-lg p-4 flex flex-col items-center mb-3">
+            <div className="relative mb-3">
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10">
+                <Award className="h-10 w-10 text-amber-800 dark:text-amber-600" />
+              </div>
+              <div
+                className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-amber-200 dark:border-amber-900 cursor-pointer transition-transform hover:scale-105"
+                onClick={() =>
+                  router.push(
+                    `/profile/${encodeURIComponent(topThree[2].email)}`
+                  )
+                }
+              >
+                <Image
+                  src={
+                    topThree[2].profilePicture ||
+                    "/placeholder.svg?height=150&width=150"
+                  }
+                  alt={topThree[2].name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
             </div>
-            <div 
-              className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-amber-200 dark:border-amber-900 cursor-pointer transition-transform hover:scale-105"
-              onClick={() => router.push(`/profile/${encodeURIComponent(topThree[2].email)}`)}
-            >
-              <Image
-                src={topThree[2].profilePicture || "/placeholder.svg?height=150&width=150"}
-                alt={topThree[2].name}
-                fill
-                className="object-cover"
-              />
-            </div>
+            <h3 className="font-semibold text-card-foreground">
+              {topThree[2].name}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {topThree[2].department}
+            </p>
+            <p className="text-sm font-medium text-teal-700 dark:text-teal-400">
+              {topThree[2].totalPoints} points
+            </p>
           </div>
-          <h3 className="font-semibold text-gray-900">{topThree[2].name}</h3>
-          <p className="text-sm text-gray-600 dark:text-muted-foreground">{topThree[2].department}</p>
-          <p className="text-sm font-medium text-teal-700 dark:text-teal-400">
-            {topThree[2].totalPoints} points
-          </p>
-          <div className="bg-amber-100 dark:bg-amber-900/20 h-24 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center">
-            <p className="mb-2 text-xl font-bold text-amber-800 dark:text-amber-400">3</p>
+          <div className="bg-amber-100 dark:bg-amber-900/20 h-24 w-full max-w-[150px] rounded-t-lg flex items-end justify-center">
+            <p className="mb-2 text-xl font-bold text-amber-800 dark:text-amber-400">
+              3
+            </p>
           </div>
         </div>
       </div>
@@ -222,7 +265,9 @@ export default function FacultyLeaderboard() {
       <Card>
         <CardContent className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">All Faculty Rankings</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              All Faculty Rankings
+            </h2>
             <div className="relative w-64">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-600 dark:text-muted-foreground" />
               <Input
@@ -286,14 +331,19 @@ export default function FacultyLeaderboard() {
                 <TableRow
                   key={faculty._id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => router.push(`/profile/${encodeURIComponent(faculty.email)}`)}
+                  onClick={() =>
+                    router.push(`/profile/${encodeURIComponent(faculty.email)}`)
+                  }
                 >
                   <TableCell className="font-medium">{index + 4}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="relative w-8 h-8 rounded-full overflow-hidden border border-border">
                         <Image
-                          src={faculty.profilePicture || "/placeholder.svg?height=150&width=150"}
+                          src={
+                            faculty.profilePicture ||
+                            "/placeholder.svg?height=150&width=150"
+                          }
                           alt={faculty.name}
                           fill
                           className="object-cover"
@@ -331,7 +381,9 @@ export default function FacultyLeaderboard() {
                       <span className="font-medium text-teal-600 dark:text-teal-400">
                         {faculty.totalPoints}
                       </span>
-                      <span className="text-sm text-muted-foreground">points</span>
+                      <span className="text-sm text-muted-foreground">
+                        points
+                      </span>
                     </div>
                   </TableCell>
                 </TableRow>

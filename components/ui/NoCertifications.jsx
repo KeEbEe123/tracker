@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 export function NoCertifications({ showAddButton = false, onAddClick }) {
   return (
-    <div className="text-center py-12 bg-slate-200 dark:bg-slate-800/50 rounded-lg border border-border">
+    <div className="text-center py-12 rounded-lg border-4 border-dashed">
       <Award className="h-12 w-12 mx-auto mb-4 text-slate-400 dark:text-slate-600" />
       <h3 className="text-lg font-medium mb-2">No Certifications Yet</h3>
       <p className="text-muted-foreground mb-4">
@@ -21,4 +21,4 @@ export function NoCertifications({ showAddButton = false, onAddClick }) {
       )}
     </div>
   );
-} 
+}

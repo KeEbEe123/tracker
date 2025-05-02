@@ -45,7 +45,11 @@ export function Navbar() {
   const navItems: NavItem[] = [
     { name: "Home", link: "/", icon: <Home className="h-4 w-4" /> },
     { name: "Profile", link: "/profile", icon: <User className="h-4 w-4" /> },
-    { name: "Contact", link: "/contact", icon: <MessageSquare className="h-4 w-4" /> },
+    {
+      name: "Contact",
+      link: "/contact",
+      icon: <MessageSquare className="h-4 w-4" />,
+    },
   ];
 
   const handleSignOut = () => {
@@ -79,12 +83,14 @@ export function Navbar() {
                     : "text-neutral-600 dark:text-neutral-300 hover:text-neutral-800 dark:hover:text-neutral-100"
                 )}
               >
-                <span className={cn(
-                  "block sm:hidden",
-                  isActive
-                    ? "text-neutral-900 dark:text-white"
-                    : "text-neutral-500 dark:text-white"
-                )}>
+                <span
+                  className={cn(
+                    "block sm:hidden",
+                    isActive
+                      ? "text-neutral-900 dark:text-white"
+                      : "text-neutral-500 dark:text-white"
+                  )}
+                >
                   {navItem.icon}
                 </span>
                 <span className="hidden sm:block text-sm font-medium">
@@ -94,10 +100,10 @@ export function Navbar() {
                 {isActive && (
                   <motion.span
                     layoutId="navbar-active-indicator"
-                    className="absolute inset-0 rounded-full bg-slate-100/80 dark:bg-slate-800/80 -z-10 shadow-md"
+                    className="absolute inset-0 rounded-full bg-cyan-400/80 dark:bg-cyan-400/80 -z-10 shadow-lg shadow-cyan-400/20"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ duration: 0.3 }}
                   />
                 )}
               </Link>
