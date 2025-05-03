@@ -61,6 +61,7 @@ export async function PATCH(request) {
     if (data.name) teacher.name = data.name;
     if (data.contactNumber) teacher.contactNumber = data.contactNumber;
     if (data.department) teacher.department = data.department;
+    if (data.designation !== undefined) teacher.designation = data.designation;
 
     await teacher.save();
 

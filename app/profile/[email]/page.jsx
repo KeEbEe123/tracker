@@ -4,13 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import {
-  Award,
-  Calendar,
-  Mail,
-  Phone,
-  Building,
-} from "lucide-react";
+import { Award, Calendar, Mail, Phone, Building } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { NoCertifications } from "@/components/ui/NoCertifications";
@@ -32,7 +26,9 @@ export default function TeacherProfilePage({ params }) {
       if (status !== "authenticated") return;
 
       try {
-        const res = await fetch(`/api/teacher/${encodeURIComponent(params.email)}`);
+        const res = await fetch(
+          `/api/teacher/${encodeURIComponent(params.email)}`
+        );
 
         if (!res.ok) {
           if (res.status === 404) {
@@ -86,7 +82,10 @@ export default function TeacherProfilePage({ params }) {
             <div className="flex flex-col items-center">
               <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-700">
                 <Image
-                  src={teacher.profilePicture || "/placeholder.svg?height=192&width=192"}
+                  src={
+                    teacher.profilePicture ||
+                    "/placeholder.svg?height=192&width=192"
+                  }
                   alt={teacher.name}
                   fill
                   className="object-cover"
@@ -97,7 +96,9 @@ export default function TeacherProfilePage({ params }) {
             {/* Teacher Info */}
             <div className="md:col-span-2">
               <h1 className="text-2xl font-semibold mb-2">{teacher.name}</h1>
-              <p className="text-muted-foreground mb-4">{teacher.department}</p>
+              <p className="text-muted-foreground mb-4">
+                {teacher.designation}
+              </p>
 
               <div className="space-y-3">
                 <p className="flex items-center gap-2">
@@ -142,7 +143,8 @@ export default function TeacherProfilePage({ params }) {
                             {cert.expiryDate && (
                               <p className="flex items-center gap-1 text-muted-foreground">
                                 <Calendar className="h-3.5 w-3.5" />
-                                Expires: {new Date(cert.expiryDate).toLocaleDateString()}
+                                Expires:{" "}
+                                {new Date(cert.expiryDate).toLocaleDateString()}
                               </p>
                             )}
                           </div>
@@ -160,4 +162,4 @@ export default function TeacherProfilePage({ params }) {
       </Card>
     </div>
   );
-} 
+}

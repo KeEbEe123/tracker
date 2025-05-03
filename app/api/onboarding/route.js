@@ -42,6 +42,7 @@ export async function POST(request) {
       email: session.user.email,
       contactNumber: data.contactNumber,
       department: data.department,
+      designation: data.designation || "",
       profilePicture: session.user.image || null,
       certifications: [],
     });
