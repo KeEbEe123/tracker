@@ -321,7 +321,7 @@ export default function ProfilePage() {
                 <div>
                   <h1 className="text-2xl font-semibold">{teacher.name}</h1>
                   <p style={{ color: "hsl(var(--muted-foreground))" }}>
-                    {teacher.department}
+                    {teacher.designation} - {teacher.department}
                   </p>
                 </div>
                 <Button
