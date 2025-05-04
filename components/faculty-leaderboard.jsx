@@ -72,32 +72,86 @@ export default function FacultyLeaderboard() {
         }
         const teachersList = await teachersRes.json();
 
-        // Add random improvement rate and recent achievement for demo if not present
-        const enhancedTeachers = teachersList.map((teacher) => {
-          if (!teacher.improvementRate) {
-            teacher.improvementRate = Math.floor(Math.random() * 20) + 1; // 1-20%
+        // Check if any teachers need improvement rates or recent achievements added
+        const teachersNeedingUpdate = teachersList.filter(
+          (teacher) => !teacher.improvementRate || !teacher.recentAchievement
+        );
+
+        if (teachersNeedingUpdate.length > 0) {
+          // Process teachers that need updates
+          const updatedTeachers = [];
+
+          for (const teacher of teachersNeedingUpdate) {
+            let needsUpdate = false;
+            const updates = { ...teacher };
+
+            // Add improvement rate if not present
+            if (!teacher.improvementRate) {
+              updates.improvementRate = Math.floor(Math.random() * 20) + 1; // 1-20%
+              needsUpdate = true;
+            }
+
+            // Add recent achievement if not present but has certifications
+            if (
+              !teacher.recentAchievement &&
+              teacher.certifications &&
+              teacher.certifications.length > 0
+            ) {
+              // Use the most recent certification as the recent achievement
+              const latestCert = teacher.certifications.reduce(
+                (latest, cert) => {
+                  const certDate = new Date(cert.issueDate);
+                  return !latest || certDate > new Date(latest.issueDate)
+                    ? cert
+                    : latest;
+                },
+                null
+              );
+
+              if (latestCert) {
+                updates.recentAchievement = latestCert.name;
+                needsUpdate = true;
+              }
+            }
+
+            if (needsUpdate) {
+              // Save the updates to the database
+              try {
+                const updateRes = await fetch(
+                  `/api/teacher/${teacher._id}/update`,
+                  {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      improvementRate: updates.improvementRate,
+                      recentAchievement: updates.recentAchievement,
+                    }),
+                  }
+                );
+
+                if (updateRes.ok) {
+                  const updatedTeacher = await updateRes.json();
+                  updatedTeachers.push(updatedTeacher);
+                }
+              } catch (updateError) {
+                console.error("Error updating teacher:", updateError);
+                // Still use the local updates even if DB update failed
+                updatedTeachers.push(updates);
+              }
+            }
           }
 
-          if (
-            !teacher.recentAchievement &&
-            teacher.certifications &&
-            teacher.certifications.length > 0
-          ) {
-            // Use the most recent certification as the recent achievement
-            const latestCert = teacher.certifications.reduce((latest, cert) => {
-              const certDate = new Date(cert.issueDate);
-              return !latest || certDate > new Date(latest.issueDate)
-                ? cert
-                : latest;
-            }, null);
+          // Merge updated teachers with those that didn't need updates
+          const mergedTeachers = teachersList.map((teacher) => {
+            const updated = updatedTeachers.find((u) => u._id === teacher._id);
+            return updated || teacher;
+          });
 
-            teacher.recentAchievement = latestCert ? latestCert.name : null;
-          }
-
-          return teacher;
-        });
-
-        setTeachers(enhancedTeachers);
+          setTeachers(mergedTeachers);
+        } else {
+          // No teachers need updates, just use the fetched list
+          setTeachers(teachersList);
+        }
 
         // Fetch departments
         const deptsRes = await fetch("/api/departments");
