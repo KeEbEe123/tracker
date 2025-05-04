@@ -3,6 +3,7 @@ import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { AuthProvider } from "@/providers/auth-provider";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,10 @@ export default function RootLayout({ children }) {
           >
             <div className="relative min-h-screen">
               <Navbar />
-              <main className="pt-24">{children}</main>
+              <main className="pt-24">
+                {children}
+                <Toaster position="top-right" />
+              </main>
             </div>
           </ThemeProvider>
         </AuthProvider>
