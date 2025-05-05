@@ -8,6 +8,8 @@ const nextConfig = {
         pathname: "/a/**",
       },
     ],
+    domains: ["localhost"],
+    unoptimized: true, // Disable image optimization for local uploads
   },
   typescript: {
     ignoreBuildErrors: true, // This will skip type checking

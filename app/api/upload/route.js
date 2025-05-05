@@ -6,6 +6,10 @@ import { existsSync } from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 
+// Define base storage path outside of application directory
+const EXTERNAL_STORAGE_PATH =
+  process.env.EXTERNAL_STORAGE_PATH || "/home/ubuntu/persistent-storage";
+
 // POST /api/upload - Upload a file (for certifications)
 export async function POST(request) {
   try {
@@ -49,16 +53,42 @@ export async function POST(request) {
       );
     }
 
-    // Define upload path - use the public directory in project root
-    const baseUploadDir = path.join(process.cwd(), "public", "uploads");
-    const certificationsUploadDir = path.join(baseUploadDir, "certifications");
+    // Create external uploads directory structure
+    const uploadsDir = path.join(EXTERNAL_STORAGE_PATH, "uploads");
+    const certificationsDir = path.join(uploadsDir, "certifications");
 
-    // Create folders if they don't exist
-    if (!existsSync(baseUploadDir)) {
-      await mkdir(baseUploadDir, { recursive: true });
+    // Create directories if they don't exist
+    if (!existsSync(uploadsDir)) {
+      await mkdir(uploadsDir, { recursive: true });
     }
-    if (!existsSync(certificationsUploadDir)) {
-      await mkdir(certificationsUploadDir, { recursive: true });
+    if (!existsSync(certificationsDir)) {
+      await mkdir(certificationsDir, { recursive: true });
+    }
+
+    // Create symbolic link in public directory if it doesn't exist
+    // This ensures Next.js can serve these files statically
+    const publicUploadsDir = path.join(process.cwd(), "public", "uploads");
+    const publicCertificationsDir = path.join(
+      publicUploadsDir,
+      "certifications"
+    );
+
+    if (!existsSync(publicUploadsDir)) {
+      await mkdir(publicUploadsDir, { recursive: true });
+    }
+
+    // In production, we'll need to create a symlink to the external storage
+    // In development, we'll just save directly to public
+    if (process.env.NODE_ENV === "production") {
+      // Note: Creating symbolic links requires additional setup in production
+      console.log(
+        `In production: External storage path is ${certificationsDir}`
+      );
+      console.log(
+        `Ensure there's a symlink from ${publicCertificationsDir} to ${certificationsDir}`
+      );
+    } else if (!existsSync(publicCertificationsDir)) {
+      await mkdir(publicCertificationsDir, { recursive: true });
     }
 
     // Generate file name and path
@@ -66,19 +96,28 @@ export async function POST(request) {
     const mimeExtension =
       file.type === "application/pdf" ? ".pdf" : `.${file.type.split("/")[1]}`;
     const filename = `${uuidv4()}${mimeExtension}`;
-    const filePath = path.join(certificationsUploadDir, filename);
+    const filePath = path.join(certificationsDir, filename);
 
     // Write file to disk
     try {
       await writeFile(filePath, buffer);
+
+      // In development mode, also save to public directory for testing
+      if (process.env.NODE_ENV !== "production") {
+        const publicFilePath = path.join(publicCertificationsDir, filename);
+        await writeFile(publicFilePath, buffer);
+      }
     } catch (error) {
       console.error("Error saving file:", error);
       return NextResponse.json({ error: "Error saving file" }, { status: 500 });
     }
 
+    // Set the URL path for browser access (relative to public directory)
+    const fileUrl = `/uploads/certifications/${filename}`;
+
     // Return public URL
     return NextResponse.json({
-      url: `/uploads/certifications/${filename}`,
+      url: fileUrl,
       filename,
     });
   } catch (error) {
