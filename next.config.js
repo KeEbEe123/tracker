@@ -7,8 +7,12 @@ const nextConfig = {
         hostname: "lh3.googleusercontent.com",
         pathname: "/a/**",
       },
+      {
+        protocol: "https",
+        hostname: "codesense.mlrit.ac.in",
+      },
     ],
-    domains: ["localhost"],
+    domains: ["localhost", "codesense.mlrit.ac.in"],
     unoptimized: true, // Disable image optimization for local uploads
   },
   typescript: {
