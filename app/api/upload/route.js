@@ -41,8 +41,7 @@ export async function POST(request) {
 
     // Check file size (5MB limit)
     const sizeInBytes = file.size;
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-
+    const maxSize = 5 * 1024 * 1024; // 5MB
     if (sizeInBytes > maxSize) {
       return NextResponse.json(
         { error: "File size exceeds 5MB limit" },
@@ -50,29 +49,26 @@ export async function POST(request) {
       );
     }
 
-    // Ensure upload directory exists with certifications subfolder
-    const baseUploadDir = path.join(process.cwd(), "public/uploads");
+    // Define persistent upload path
+    const baseUploadDir = "/var/www/uploads";
     const certificationsUploadDir = path.join(baseUploadDir, "certifications");
 
-    // Create base uploads directory if it doesn't exist
+    // Create folders if they don't exist
     if (!existsSync(baseUploadDir)) {
       await mkdir(baseUploadDir, { recursive: true });
     }
-
-    // Create certifications subdirectory if it doesn't exist
     if (!existsSync(certificationsUploadDir)) {
       await mkdir(certificationsUploadDir, { recursive: true });
     }
 
-    // Generate unique filename
+    // Generate file name and path
     const buffer = Buffer.from(await file.arrayBuffer());
-    const fileExtension =
-      file.type.split("/")[1] === "pdf"
-        ? ".pdf"
-        : `.${file.type.split("/")[1]}`;
-    const filename = `${uuidv4()}${fileExtension}`;
+    const mimeExtension =
+      file.type === "application/pdf" ? ".pdf" : `.${file.type.split("/")[1]}`;
+    const filename = `${uuidv4()}${mimeExtension}`;
     const filePath = path.join(certificationsUploadDir, filename);
 
+    // Write file to disk
     try {
       await writeFile(filePath, buffer);
     } catch (error) {
@@ -80,10 +76,10 @@ export async function POST(request) {
       return NextResponse.json({ error: "Error saving file" }, { status: 500 });
     }
 
-    // Return the URL for the uploaded file
+    // Return public URL
     return NextResponse.json({
       url: `/uploads/certifications/${filename}`,
-      filename: filename,
+      filename,
     });
   } catch (error) {
     console.error("Error handling file upload:", error);

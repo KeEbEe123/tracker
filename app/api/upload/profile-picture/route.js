@@ -10,16 +10,15 @@ import { deleteFileFromServer } from "@/utils/file-utils";
 
 export async function POST(request) {
   try {
-    // Check authentication
+    // Auth check
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Get teacher from database
+    // Get teacher
     const TeacherModel = await getTeacherModel();
     const teacher = await TeacherModel.findOne({ userId: session.user.id });
-
     if (!teacher) {
       return NextResponse.json(
         { error: "Teacher profile not found" },
@@ -27,21 +26,18 @@ export async function POST(request) {
       );
     }
 
-    // Store the old profile picture URL to delete later
     const oldProfilePictureUrl = teacher.profilePicture;
 
-    // Process the file upload
+    // Get uploaded file
     const formData = await request.formData();
     const file = formData.get("file");
-
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    // Check file size (5MB limit)
+    // File size check
     const sizeInBytes = file.size;
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-
+    const maxSize = 5 * 1024 * 1024;
     if (sizeInBytes > maxSize) {
       return NextResponse.json(
         { error: "File size exceeds 5MB limit" },
@@ -49,7 +45,7 @@ export async function POST(request) {
       );
     }
 
-    // Check file type
+    // Type check
     const validTypes = [
       "image/jpeg",
       "image/png",
@@ -61,43 +57,38 @@ export async function POST(request) {
       return NextResponse.json(
         {
           error:
-            "Unsupported file type. Please upload an image (JPEG, PNG, WEBP, or GIF)",
+            "Unsupported file type. Please upload JPEG, PNG, WEBP, or GIF.",
         },
         { status: 400 }
       );
     }
 
-    // Ensure upload directory exists with profiles subfolder
-    const baseUploadDir = path.join(process.cwd(), "public/uploads");
+    // Define upload path
+    const baseUploadDir = "/var/www/uploads";
     const profilesUploadDir = path.join(baseUploadDir, "profiles");
 
-    // Create base uploads directory if it doesn't exist
+    // Ensure folders exist
     if (!existsSync(baseUploadDir)) {
       await mkdir(baseUploadDir, { recursive: true });
     }
-
-    // Create profiles subdirectory if it doesn't exist
     if (!existsSync(profilesUploadDir)) {
       await mkdir(profilesUploadDir, { recursive: true });
     }
 
-    // Create an unique filename
+    // Save file
     const buffer = Buffer.from(await file.arrayBuffer());
     const fileExtension = file.type.split("/")[1];
     const fileName = `${uuidv4()}.${fileExtension}`;
     const filePath = path.join(profilesUploadDir, fileName);
-
-    // Write the file to disk
     await writeFile(filePath, buffer);
 
-    // Create the URL for the image (path relative to public folder)
     const fileUrl = `/uploads/profiles/${fileName}`;
 
-    // Update the teacher profile with the new image URL
+    // Update teacher
     teacher.profilePicture = fileUrl;
     await teacher.save();
 
-    // Delete the old profile picture if it exists and isn't a default image
+    // Delete old file if custom
     if (
       oldProfilePictureUrl &&
       oldProfilePictureUrl.startsWith("/uploads/") &&
@@ -106,7 +97,6 @@ export async function POST(request) {
       await deleteFileFromServer(oldProfilePictureUrl);
     }
 
-    // Return success response with the URL
     return NextResponse.json({ url: fileUrl });
   } catch (error) {
     console.error("Error in profile picture upload:", error);
