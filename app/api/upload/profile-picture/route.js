@@ -63,8 +63,8 @@ export async function POST(request) {
       );
     }
 
-    // Define upload path
-    const baseUploadDir = "/var/www/uploads";
+    // Define upload path - use the public directory in project root
+    const baseUploadDir = path.join(process.cwd(), "public", "uploads");
     const profilesUploadDir = path.join(baseUploadDir, "profiles");
 
     // Ensure folders exist

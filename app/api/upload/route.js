@@ -49,8 +49,8 @@ export async function POST(request) {
       );
     }
 
-    // Define persistent upload path
-    const baseUploadDir = "/var/www/uploads";
+    // Define upload path - use the public directory in project root
+    const baseUploadDir = path.join(process.cwd(), "public", "uploads");
     const certificationsUploadDir = path.join(baseUploadDir, "certifications");
 
     // Create folders if they don't exist
