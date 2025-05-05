@@ -13,6 +13,7 @@ import {
   Loader2,
   BookOpen,
 } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
@@ -48,7 +49,7 @@ export default function OnboardingPage() {
       setLoadingMessage("Checking if you've already completed onboarding...");
       try {
         const response = await fetch(
-          `/api/teacher/${encodeURIComponent(session.user.email)}`
+          `/api/teacher?email=${encodeURIComponent(session.user.email)}`
         );
 
         if (ignore) return; // Don't continue if already redirected
@@ -147,13 +148,13 @@ export default function OnboardingPage() {
           }}
           className="rounded-lg shadow-sm p-6 border border-border"
         >
-          <div
-            className="text-center flex flex-col items-center justify-center p-8"
+          <LoadingSpinner />
+          <p
+            className="text-center mt-4"
             style={{ color: "hsl(var(--muted-foreground))" }}
           >
-            <Loader2 className="h-8 w-8 animate-spin mb-4" />
-            <p>{loadingMessage}</p>
-          </div>
+            {loadingMessage}
+          </p>
         </div>
       </div>
     );
@@ -267,9 +268,8 @@ export default function OnboardingPage() {
                   style={{ color: "hsl(var(--muted-foreground))" }}
                 />
               </div>
-              <input
+              <select
                 id="department"
-                type="text"
                 value={formData.department}
                 onChange={(e) =>
                   setFormData({ ...formData, department: e.target.value })
@@ -281,7 +281,21 @@ export default function OnboardingPage() {
                   color: "hsl(var(--foreground))",
                 }}
                 required
-              />
+              >
+                <option value="">Select Department</option>
+                <option value="IT">IT</option>
+                <option value="CSE">CSE</option>
+                <option value="CSE-AIML">CSE-AIML</option>
+                <option value="CSDS">CSDS</option>
+                <option value="CSE-Cyber Security">CSE-Cyber Security</option>
+                <option value="ECE">ECE</option>
+                <option value="EEE">EEE</option>
+                <option value="MECH">MECH</option>
+                <option value="AERO">AERO</option>
+                <option value="CSIT">CSIT</option>
+                <option value="MBA">MBA</option>
+                <option value="H&S">H&S</option>
+              </select>
             </div>
           </div>
 

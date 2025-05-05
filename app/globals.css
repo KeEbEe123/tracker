@@ -3,26 +3,44 @@
 @import "tailwindcss";
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
+  --background: 285 40% 98%;
+  --foreground: 275 38% 6%;
+
+  --card: 285 40% 95%; /* Slightly deeper than background for emphasis */
+  --card-foreground: 275 38% 6%;
+
+  --popover: 285 40% 95%;
+  --popover-foreground: 275 38% 6%;
+
+  --primary: 275 39% 55%;
+  --primary-foreground: 0 0% 100%; /* white on primary */
+
+  --secondary: 304 39% 72%;
+  --secondary-foreground: 275 38% 6%;
+
+  --muted: 304 39% 85%;
+  --muted-foreground: 275 38% 20%;
+
+  --accent: 316 40% 64%;
+  --accent-foreground: 0 0% 100%;
+
   --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 285 30% 90%;
+  --input: 285 30% 90%;
+
+  --ring: 316 40% 64%;
   --radius: 0.5rem;
+
+  /* Icon container background colors */
+  --indigo-bg-color: #eef2ff; /* Light mode indigo background */
+  --blue-bg-color: #eff6ff; /* Light mode blue background */
+  --teal-bg-color: #f0fdfa; /* Light mode teal background */
+  --amber-bg-color: #fffbeb; /* Light mode amber background */
+
+  /* Loader color */
+  --loader-color: #0ea5e9; /* Light mode loader color - sky blue */
 }
 
 .dark {
@@ -45,6 +63,15 @@
   --border: 217.2 32.6% 17.5%;
   --input: 217.2 32.6% 17.5%;
   --ring: 224.3 76.3% 48%;
+
+  /* Icon container background colors for dark mode */
+  --indigo-bg-color: rgba(79, 70, 229, 0.2); /* Dark mode indigo background */
+  --blue-bg-color: rgba(59, 130, 246, 0.2); /* Dark mode blue background */
+  --teal-bg-color: rgba(20, 184, 166, 0.2); /* Dark mode teal background */
+  --amber-bg-color: rgba(217, 119, 6, 0.2); /* Dark mode amber background */
+
+  /* Loader color for dark mode */
+  --loader-color: #38bdf8; /* Dark mode loader color - lighter sky blue */
 }
 
 * {

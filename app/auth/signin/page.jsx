@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 
-export default function SignInPage() {
+// Component to handle search params (wrapped in Suspense)
+function SignInContent() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
@@ -88,5 +89,33 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Loading fallback for Suspense
+function SignInFallback() {
+  return (
+    <div className="container max-w-md mx-auto py-16 px-4">
+      <div
+        style={{
+          backgroundColor: "hsl(var(--card))",
+          color: "hsl(var(--card-foreground))",
+        }}
+        className="rounded-lg shadow-sm p-8 border border-border"
+      >
+        <div className="text-center">
+          <p style={{ color: "hsl(var(--muted-foreground))" }}>Loading...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main page component with Suspense
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<SignInFallback />}>
+      <SignInContent />
+    </Suspense>
   );
 }

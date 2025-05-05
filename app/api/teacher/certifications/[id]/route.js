@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getTeacherModel } from "@/models/Teacher";
+import { deleteFileFromServer } from "@/utils/file-utils";
 
 // PATCH /api/teacher/certifications/[id] - Update a certification
 export async function PATCH(request, context) {
@@ -37,6 +38,10 @@ export async function PATCH(request, context) {
       );
     }
 
+    // Store the old image URL to delete if it's changing
+    const oldImageUrl = teacher.certifications[certIndex].imageUrl;
+    const isImageChanging = data.imageUrl && oldImageUrl !== data.imageUrl;
+
     // Update certification fields
     teacher.certifications[certIndex] = {
       ...teacher.certifications[certIndex],
@@ -50,6 +55,11 @@ export async function PATCH(request, context) {
     };
 
     await teacher.save();
+
+    // Delete the old image if it was changed and is an uploaded file
+    if (isImageChanging && oldImageUrl && oldImageUrl.startsWith("/uploads/")) {
+      await deleteFileFromServer(oldImageUrl);
+    }
 
     return NextResponse.json(teacher);
   } catch (error) {
@@ -82,12 +92,25 @@ export async function DELETE(request, context) {
       );
     }
 
+    // Find the certification to get its image URL before removing
+    const certification = teacher.certifications.find(
+      (cert) => cert._id.toString() === certId
+    );
+
+    // Store the image URL to delete
+    const imageUrl = certification ? certification.imageUrl : null;
+
     // Remove the certification
     teacher.certifications = teacher.certifications.filter(
       (cert) => cert._id.toString() !== certId
     );
 
     await teacher.save();
+
+    // Delete the image file if it exists and is an uploaded file
+    if (imageUrl && imageUrl.startsWith("/uploads/")) {
+      await deleteFileFromServer(imageUrl);
+    }
 
     return NextResponse.json(teacher);
   } catch (error) {
@@ -97,4 +120,4 @@ export async function DELETE(request, context) {
       { status: 500 }
     );
   }
-} 
+}

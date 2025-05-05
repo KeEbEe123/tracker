@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { NoCertifications } from "@/components/ui/NoCertifications";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -56,6 +57,9 @@ export default function ProfilePage() {
   const [imagePreview, setImagePreview] = useState(null);
   const [activeTab, setActiveTab] = useState("view");
   const [editingCert, setEditingCert] = useState(null);
+  const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false);
+  const [profileImageError, setProfileImageError] = useState("");
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -190,6 +194,66 @@ export default function ProfilePage() {
     }
   };
 
+  const handleProfilePictureUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Reset error state
+    setProfileImageError("");
+
+    // Check file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      setProfileImageError("File size exceeds 5MB limit");
+      return;
+    }
+
+    // Check file type
+    const validTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "image/webp",
+      "image/gif",
+    ];
+    if (!validTypes.includes(file.type)) {
+      setProfileImageError(
+        "Please upload a valid image (JPEG, PNG, WEBP, or GIF)"
+      );
+      return;
+    }
+
+    setUploadingProfilePicture(true);
+    try {
+      // Create FormData
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload/profile-picture", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to upload profile picture");
+      }
+
+      const data = await res.json();
+
+      // Update the teacher state with the new profile picture URL
+      setTeacher({
+        ...teacher,
+        profilePicture: data.url,
+      });
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      setProfileImageError(error.message || "Failed to upload profile picture");
+    } finally {
+      setUploadingProfilePicture(false);
+    }
+  };
+
   const nextCertification = () => {
     if (
       teacher &&
@@ -267,12 +331,7 @@ export default function ProfilePage() {
           }}
           className="rounded-lg shadow-sm p-6 border border-border"
         >
-          <div
-            className="text-center"
-            style={{ color: "hsl(var(--muted-foreground))" }}
-          >
-            Loading...
-          </div>
+          <LoadingSpinner />
         </div>
       </div>
     );
@@ -327,7 +386,7 @@ export default function ProfilePage() {
                 <Button
                   variant="outline"
                   onClick={() => setEditing(!editing)}
-                  className="flex items-center gap-2 bg-slate-800 text-slate-100 hover:bg-slate-700"
+                  className="flex items-center gap-2 bg-slate-800 text-slate-100 hover:text-black"
                 >
                   <PenLine className="h-4 w-4" />
                   {editing ? "Cancel" : "Edit Profile"}
@@ -388,13 +447,43 @@ export default function ProfilePage() {
                     setFormData({ ...formData, contactNumber: e.target.value })
                   }
                 />
-                <Input
-                  label="Department"
-                  value={formData.department}
-                  onChange={(e) =>
-                    setFormData({ ...formData, department: e.target.value })
-                  }
-                />
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-1"
+                    style={{ color: "hsl(var(--foreground))" }}
+                  >
+                    Department
+                  </label>
+                  <select
+                    value={formData.department}
+                    onChange={(e) =>
+                      setFormData({ ...formData, department: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-transparent"
+                    style={{
+                      backgroundColor: "hsl(var(--background))",
+                      borderColor: "hsl(var(--input))",
+                      color: "hsl(var(--foreground))",
+                    }}
+                    required
+                  >
+                    <option value="">Select Department</option>
+                    <option value="IT">IT</option>
+                    <option value="CSE">CSE</option>
+                    <option value="CSE-AIML">CSE-AIML</option>
+                    <option value="CSDS">CSDS</option>
+                    <option value="CSE-Cyber Security">
+                      CSE-Cyber Security
+                    </option>
+                    <option value="ECE">ECE</option>
+                    <option value="EEE">EEE</option>
+                    <option value="MECH">MECH</option>
+                    <option value="AERO">AERO</option>
+                    <option value="CSIT">CSIT</option>
+                    <option value="MBA">MBA</option>
+                    <option value="H&S">H&S</option>
+                  </select>
+                </div>
                 <div>
                   <label
                     className="block text-sm font-medium mb-1"
@@ -723,18 +812,39 @@ export default function ProfilePage() {
                 alt="Profile picture"
                 fill
                 className="object-cover"
-                priority
               />
             </div>
 
             <div className="mt-4 text-center">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleProfilePictureUpload}
+                ref={fileInputRef}
+              />
               <Button
                 variant="outline"
                 size="sm"
-                className="text-sm bg-slate-800 text-slate-100 hover:bg-slate-700"
+                className="text-sm bg-slate-800 text-slate-100 hover:text-black"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingProfilePicture}
               >
-                Update Photo
+                {uploadingProfilePicture ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Update Photo
+                  </>
+                )}
               </Button>
+              {profileImageError && (
+                <p className="text-xs text-red-500 mt-2">{profileImageError}</p>
+              )}
             </div>
 
             <div className="mt-8 w-full">
