@@ -27,17 +27,12 @@ export async function POST(request) {
     }
 
     // Validate file type
-    const validTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "application/pdf",
-    ];
+    const validTypes = ["image/jpeg", "image/png", "image/jpg"];
     if (!validTypes.includes(file.type)) {
       return NextResponse.json(
         {
           error:
-            "Invalid file type. Only JPEG, PNG, WebP and PDF files are allowed.",
+            "Invalid file type. Only JPEG, JPG, and PNG files are allowed.",
         },
         { status: 400 }
       );
@@ -93,9 +88,8 @@ export async function POST(request) {
 
     // Generate file name and path
     const buffer = Buffer.from(await file.arrayBuffer());
-    const mimeExtension =
-      file.type === "application/pdf" ? ".pdf" : `.${file.type.split("/")[1]}`;
-    const filename = `${uuidv4()}${mimeExtension}`;
+    const fileExtension = file.type.split("/")[1];
+    const filename = `${uuidv4()}.${fileExtension}`;
     const filePath = path.join(certificationsDir, filename);
 
     // Write file to disk

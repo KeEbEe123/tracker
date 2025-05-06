@@ -54,6 +54,13 @@ export default function FacultyLeaderboard() {
   const [sortOrder, setSortOrder] = useState("desc");
   const [isFiltering, setIsFiltering] = useState(false);
 
+  // ❌ Emails to exclude from leaderboard
+  const exemptedEmails = [
+    "23r21a1285@mlrit.ac.in",
+    "drrajasekhar@mlrinstitutions.ac.in",
+    "23r21a12b3@mlrit.ac.in",
+  ];
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/signin");
@@ -74,86 +81,71 @@ export default function FacultyLeaderboard() {
         }
         const teachersList = await teachersRes.json();
 
-        // Check if any teachers need improvement rates or recent achievements added
         const teachersNeedingUpdate = teachersList.filter(
           (teacher) => !teacher.improvementRate || !teacher.recentAchievement
         );
 
-        if (teachersNeedingUpdate.length > 0) {
-          // Process teachers that need updates
-          const updatedTeachers = [];
+        const updatedTeachers = [];
+        for (const teacher of teachersNeedingUpdate) {
+          let needsUpdate = false;
+          const updates = { ...teacher };
 
-          for (const teacher of teachersNeedingUpdate) {
-            let needsUpdate = false;
-            const updates = { ...teacher };
+          if (!teacher.improvementRate) {
+            updates.improvementRate = Math.floor(Math.random() * 20) + 1;
+            needsUpdate = true;
+          }
 
-            // Add improvement rate if not present
-            if (!teacher.improvementRate) {
-              updates.improvementRate = Math.floor(Math.random() * 20) + 1; // 1-20%
+          if (
+            !teacher.recentAchievement &&
+            teacher.certifications &&
+            teacher.certifications.length > 0
+          ) {
+            const latestCert = teacher.certifications.reduce((latest, cert) => {
+              const certDate = new Date(cert.issueDate);
+              return !latest || certDate > new Date(latest.issueDate)
+                ? cert
+                : latest;
+            }, null);
+            if (latestCert) {
+              updates.recentAchievement = latestCert.name;
               needsUpdate = true;
-            }
-
-            // Add recent achievement if not present but has certifications
-            if (
-              !teacher.recentAchievement &&
-              teacher.certifications &&
-              teacher.certifications.length > 0
-            ) {
-              // Use the most recent certification as the recent achievement
-              const latestCert = teacher.certifications.reduce(
-                (latest, cert) => {
-                  const certDate = new Date(cert.issueDate);
-                  return !latest || certDate > new Date(latest.issueDate)
-                    ? cert
-                    : latest;
-                },
-                null
-              );
-
-              if (latestCert) {
-                updates.recentAchievement = latestCert.name;
-                needsUpdate = true;
-              }
-            }
-
-            if (needsUpdate) {
-              // Save the updates to the database
-              try {
-                const updateRes = await fetch(
-                  `/api/teacher/${teacher._id}/update`,
-                  {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      improvementRate: updates.improvementRate,
-                      recentAchievement: updates.recentAchievement,
-                    }),
-                  }
-                );
-
-                if (updateRes.ok) {
-                  const updatedTeacher = await updateRes.json();
-                  updatedTeachers.push(updatedTeacher);
-                }
-              } catch (updateError) {
-                console.error("Error updating teacher:", updateError);
-                // Still use the local updates even if DB update failed
-                updatedTeachers.push(updates);
-              }
             }
           }
 
-          // Merge updated teachers with those that didn't need updates
-          const mergedTeachers = teachersList.map((teacher) => {
-            const updated = updatedTeachers.find((u) => u._id === teacher._id);
-            return updated || teacher;
-          });
+          if (needsUpdate) {
+            try {
+              const updateRes = await fetch(
+                `/api/teacher/${teacher._id}/update`,
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    improvementRate: updates.improvementRate,
+                    recentAchievement: updates.recentAchievement,
+                  }),
+                }
+              );
 
-          setTeachers(mergedTeachers);
-        } else {
-          // No teachers need updates, just use the fetched list
-          setTeachers(teachersList);
+              if (updateRes.ok) {
+                const updatedTeacher = await updateRes.json();
+                updatedTeachers.push(updatedTeacher);
+              }
+            } catch {
+              updatedTeachers.push(updates);
+            }
+          }
         }
+
+        const mergedTeachers = teachersList.map((teacher) => {
+          const updated = updatedTeachers.find((u) => u._id === teacher._id);
+          return updated || teacher;
+        });
+
+        const filteredTeachers = mergedTeachers.filter(
+          (teacher) => !exemptedEmails.includes(teacher.email)
+        );
+
+        setTeachers(filteredTeachers);
 
         // Fetch departments
         const deptsRes = await fetch("/api/departments");
@@ -162,13 +154,12 @@ export default function FacultyLeaderboard() {
           setDepartments(deptsData);
         }
 
-        // Fetch upcoming certifications from the database
+        // Fetch certifications
         const certsRes = await fetch("/api/certification-links");
         if (certsRes.ok) {
           const certsData = await certsRes.json();
           setUpcomingCertifications(certsData);
         } else {
-          // Fallback to static data if API fails
           setUpcomingCertifications([
             {
               name: "Advanced Teaching Methods",
@@ -210,11 +201,8 @@ export default function FacultyLeaderboard() {
     );
   }
 
-  if (status === "unauthenticated") {
-    return null;
-  }
+  if (status === "unauthenticated") return null;
 
-  // Get top 3 faculty members
   const topThree = [...teachers]
     .sort((a, b) => b.totalPoints - a.totalPoints)
     .slice(0, 3);
@@ -230,12 +218,10 @@ export default function FacultyLeaderboard() {
     });
   }
 
-  // Get most improved faculty members
   const mostImproved = [...teachers]
     .sort((a, b) => b.improvementRate - a.improvementRate)
     .slice(0, 3);
 
-  // Get the rest of the faculty members (4th place and below)
   const remainingFaculty = [...teachers]
     .sort((a, b) => {
       if (sortBy === "totalPoints") {
@@ -257,7 +243,7 @@ export default function FacultyLeaderboard() {
       }
       return 0;
     })
-    .filter((_, index) => index >= 3) // Skip the top 3
+    .filter((_, index) => index >= 3)
     .filter(
       (faculty) =>
         faculty.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -267,7 +253,6 @@ export default function FacultyLeaderboard() {
   const handleSort = (column) => {
     setIsFiltering(true);
     setTimeout(() => setIsFiltering(false), 300);
-
     if (sortBy === column) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -276,18 +261,17 @@ export default function FacultyLeaderboard() {
     }
   };
 
-  // Calculate total stats
   const totalCertifications = teachers.reduce(
     (sum, teacher) =>
       sum + (teacher.certifications ? teacher.certifications.length : 0),
     0
   );
+
   const averageScore = Math.round(
     teachers.reduce((sum, teacher) => sum + (teacher.totalPoints || 0), 0) /
       (teachers.length || 1)
   );
 
-  // Format date for display
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",

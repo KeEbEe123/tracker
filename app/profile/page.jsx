@@ -164,6 +164,13 @@ export default function ProfilePage() {
 
     setUploadingImage(true);
     try {
+      // Validate file type first
+      const validTypes = ["image/jpeg", "image/png", "image/jpg"];
+
+      if (!validTypes.includes(file.type)) {
+        throw new Error("Please upload a valid image (JPEG, JPG, or PNG only)");
+      }
+
       // Create FormData
       const formData = new FormData();
       formData.append("file", file);
@@ -189,6 +196,8 @@ export default function ProfilePage() {
       reader.readAsDataURL(file);
     } catch (error) {
       console.error("Error uploading image:", error);
+      // Display error to the user
+      alert(error.message || "Failed to upload image");
     } finally {
       setUploadingImage(false);
     }
@@ -209,16 +218,10 @@ export default function ProfilePage() {
     }
 
     // Check file type
-    const validTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/jpg",
-      "image/webp",
-      "image/gif",
-    ];
+    const validTypes = ["image/jpeg", "image/png", "image/jpg"];
     if (!validTypes.includes(file.type)) {
       setProfileImageError(
-        "Please upload a valid image (JPEG, PNG, WEBP, or GIF)"
+        "Please upload a valid image (JPEG, JPG, or PNG only)"
       );
       return;
     }
@@ -654,7 +657,7 @@ export default function ProfilePage() {
                         <input
                           type="file"
                           className="hidden"
-                          accept="image/*,.pdf"
+                          accept="image/png,image/jpeg,image/jpg"
                           onChange={handleImageUpload}
                           disabled={uploadingImage}
                           required={!newCertification.imageUrl}
@@ -818,7 +821,7 @@ export default function ProfilePage() {
             <div className="mt-4 text-center">
               <input
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/jpg"
                 className="hidden"
                 onChange={handleProfilePictureUpload}
                 ref={fileInputRef}

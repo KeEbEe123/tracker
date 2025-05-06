@@ -50,18 +50,11 @@ export async function POST(request) {
     }
 
     // Type check
-    const validTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/jpg",
-      "image/webp",
-      "image/gif",
-    ];
+    const validTypes = ["image/jpeg", "image/png", "image/jpg"];
     if (!validTypes.includes(file.type)) {
       return NextResponse.json(
         {
-          error:
-            "Unsupported file type. Please upload JPEG, PNG, WEBP, or GIF.",
+          error: "Unsupported file type. Please upload JPEG, JPG, or PNG only.",
         },
         { status: 400 }
       );
