@@ -278,7 +278,7 @@ export default function TeacherProfilePage({ params }) {
                         onClick={prevCertification}
                         disabled={teacher.certifications.length <= 1}
                       >
-                        <ChevronLeft className="h-4 w-4" />
+                        <ChevronLeft className="h-4 w-4 text-black" />
                       </Button>
                       <Button
                         variant="outline"
@@ -286,12 +286,13 @@ export default function TeacherProfilePage({ params }) {
                         onClick={nextCertification}
                         disabled={teacher.certifications.length <= 1}
                       >
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-4 w-4 text-black" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setShowAllCerts(!showAllCerts)}
+                        className="text-black"
                       >
                         {showAllCerts ? "Show Featured" : "View All"}
                       </Button>

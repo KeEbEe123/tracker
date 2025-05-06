@@ -406,16 +406,8 @@ export default function FacultyLeaderboard() {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <div className="relative mb-3">
-              <motion.div
-                className="absolute -top-6 left-1/2 transform -translate-x-1/2"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.7 }}
-              >
-                <Medal className="h-10 w-10 text-gray-400 dark:text-gray-500" />
-              </motion.div>
               <div
-                className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-700 cursor-pointer"
+                className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-gray-500 dark:border-gray-600 cursor-pointer"
                 onClick={() =>
                   topThree[1].email &&
                   router.push(
@@ -440,14 +432,12 @@ export default function FacultyLeaderboard() {
               {topThree[1].totalPoints} points
             </p>
             <motion.div
-              className="bg-gray-200 dark:bg-gray-700 h-32 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center"
+              className="bg-gray-500 dark:bg-gray-600 h-32 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center shadow-md"
               initial={{ height: 0 }}
               animate={{ height: 128 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <p className="mb-2 text-xl font-bold text-gray-700 dark:text-gray-300">
-                2
-              </p>
+              <p className="mb-2 text-2xl font-bold text-white">2</p>
             </motion.div>
           </motion.div>
 
@@ -459,16 +449,8 @@ export default function FacultyLeaderboard() {
             transition={{ duration: 0.5 }}
           >
             <div className="relative mb-3">
-              <motion.div
-                className="absolute -top-8 left-1/2 transform -translate-x-1/2"
-                initial={{ scale: 0, rotate: -30 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ duration: 0.5, delay: 0.5, type: "spring" }}
-              >
-                <Trophy className="h-12 w-12 text-yellow-500 dark:text-yellow-400" />
-              </motion.div>
               <div
-                className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-200 dark:border-yellow-700 cursor-pointer"
+                className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-500 dark:border-yellow-600 cursor-pointer"
                 onClick={() =>
                   topThree[0].email &&
                   router.push(
@@ -493,17 +475,12 @@ export default function FacultyLeaderboard() {
               {topThree[0].totalPoints} points
             </p>
             <motion.div
-              className="w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center border-t-4 border-yellow-300 dark:border-yellow-600"
-              style={{
-                backgroundColor: "var(--amber-bg-color, #fffbeb)",
-              }}
+              className="bg-yellow-500 dark:bg-yellow-600 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center shadow-md"
               initial={{ height: 0 }}
               animate={{ height: 160 }}
               transition={{ duration: 0.7, delay: 0.1 }}
             >
-              <p className="mb-2 text-2xl font-bold text-yellow-700 dark:text-yellow-400">
-                1
-              </p>
+              <p className="mb-2 text-3xl font-bold text-white">1</p>
             </motion.div>
           </motion.div>
 
@@ -515,16 +492,8 @@ export default function FacultyLeaderboard() {
             transition={{ duration: 0.5, delay: 0.4 }}
           >
             <div className="relative mb-3">
-              <motion.div
-                className="absolute -top-6 left-1/2 transform -translate-x-1/2"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.9 }}
-              >
-                <Award className="h-10 w-10 text-blue-600 dark:text-blue-500" />
-              </motion.div>
               <div
-                className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-blue-200 dark:border-blue-700 cursor-pointer"
+                className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-blue-500 dark:border-blue-600 cursor-pointer"
                 onClick={() =>
                   topThree[2].email &&
                   router.push(
@@ -549,14 +518,12 @@ export default function FacultyLeaderboard() {
               {topThree[2].totalPoints} points
             </p>
             <motion.div
-              className="bg-blue-50 dark:bg-blue-900/20 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center"
+              className="bg-blue-500 dark:bg-blue-600 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center shadow-md"
               initial={{ height: 0 }}
               animate={{ height: 96 }}
               transition={{ duration: 0.5, delay: 0.5 }}
             >
-              <p className="mb-2 text-xl font-bold text-blue-700 dark:text-blue-400">
-                3
-              </p>
+              <p className="mb-2 text-2xl font-bold text-white">3</p>
             </motion.div>
           </motion.div>
         </motion.div>
