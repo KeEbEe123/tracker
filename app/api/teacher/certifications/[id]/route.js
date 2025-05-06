@@ -48,9 +48,8 @@ export async function PATCH(request, context) {
       name: data.name,
       issuingOrganization: data.issuingOrganization,
       issueDate: data.issueDate,
-      expiryDate: data.expiryDate || null,
-      credentialId: data.credentialId,
-      credentialUrl: data.credentialUrl,
+      credentialId: data.credentialId || null,
+      credentialUrl: data.credentialUrl || null,
       imageUrl: data.imageUrl,
     };
 

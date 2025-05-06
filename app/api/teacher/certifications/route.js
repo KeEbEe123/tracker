@@ -37,7 +37,6 @@ export async function POST(request) {
       name: data.name,
       issuingOrganization: data.issuingOrganization,
       issueDate: data.issueDate,
-      expiryDate: data.expiryDate || null,
       credentialId: data.credentialId || null,
       credentialUrl: data.credentialUrl || null,
       imageUrl: data.imageUrl || null,

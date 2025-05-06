@@ -48,7 +48,6 @@ export default function ProfilePage() {
     name: "",
     issuingOrganization: "",
     issueDate: "",
-    expiryDate: "",
     credentialId: "",
     credentialUrl: "",
     imageUrl: "",
@@ -148,7 +147,6 @@ export default function ProfilePage() {
         name: "",
         issuingOrganization: "",
         issueDate: "",
-        expiryDate: "",
         credentialId: "",
         credentialUrl: "",
         imageUrl: "",
@@ -299,7 +297,6 @@ export default function ProfilePage() {
         name: "",
         issuingOrganization: "",
         issueDate: "",
-        expiryDate: "",
         credentialId: "",
         credentialUrl: "",
         imageUrl: "",
@@ -606,18 +603,7 @@ export default function ProfilePage() {
                       required
                     />
                     <Input
-                      label="Expiry Date"
-                      type="date"
-                      value={newCertification.expiryDate}
-                      onChange={(e) =>
-                        setNewCertification({
-                          ...newCertification,
-                          expiryDate: e.target.value,
-                        })
-                      }
-                    />
-                    <Input
-                      label="Credential ID *"
+                      label="Credential ID"
                       value={newCertification.credentialId}
                       onChange={(e) =>
                         setNewCertification({
@@ -625,10 +611,10 @@ export default function ProfilePage() {
                           credentialId: e.target.value,
                         })
                       }
-                      required
+                      required={false}
                     />
                     <Input
-                      label="Credential URL *"
+                      label="Credential URL"
                       type="url"
                       value={newCertification.credentialUrl}
                       onChange={(e) =>
@@ -637,7 +623,7 @@ export default function ProfilePage() {
                           credentialUrl: e.target.value,
                         })
                       }
-                      required
+                      required={false}
                     />
                   </div>
 
@@ -740,8 +726,6 @@ export default function ProfilePage() {
                                       issuingOrganization:
                                         cert.issuingOrganization,
                                       issueDate: cert.issueDate.split("T")[0],
-                                      expiryDate:
-                                        cert.expiryDate?.split("T")[0] || "",
                                       credentialId: cert.credentialId,
                                       credentialUrl: cert.credentialUrl,
                                       imageUrl: cert.imageUrl,
@@ -769,15 +753,6 @@ export default function ProfilePage() {
                                 Issued:{" "}
                                 {new Date(cert.issueDate).toLocaleDateString()}
                               </p>
-                              {cert.expiryDate && (
-                                <p className="flex items-center gap-1">
-                                  <Calendar className="h-3.5 w-3.5" />
-                                  Expires:{" "}
-                                  {new Date(
-                                    cert.expiryDate
-                                  ).toLocaleDateString()}
-                                </p>
-                              )}
                             </div>
                           </div>
                         </CardContent>
@@ -913,7 +888,7 @@ export default function ProfilePage() {
   );
 }
 
-function Input({ label, value, onChange, type = "text" }) {
+function Input({ label, value, onChange, type = "text", required = false }) {
   return (
     <div>
       <label
@@ -932,7 +907,7 @@ function Input({ label, value, onChange, type = "text" }) {
           borderColor: "hsl(var(--input))",
           color: "hsl(var(--foreground))",
         }}
-        required
+        required={required}
       />
     </div>
   );

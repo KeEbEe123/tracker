@@ -53,6 +53,7 @@ export default function FacultyLeaderboard() {
   const [sortBy, setSortBy] = useState("totalPoints");
   const [sortOrder, setSortOrder] = useState("desc");
   const [isFiltering, setIsFiltering] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState("");
 
   // ❌ Emails to exclude from leaderboard
   const exemptedEmails = [
@@ -66,6 +67,12 @@ export default function FacultyLeaderboard() {
       router.push("/auth/signin");
     }
   }, [status, router]);
+
+  useEffect(() => {
+    if (status === "authenticated" && session.user?.email) {
+      setCurrentUserEmail(session.user.email);
+    }
+  }, [status, session]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -514,10 +521,10 @@ export default function FacultyLeaderboard() {
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.3, delay: 0.9 }}
               >
-                <Award className="h-10 w-10 text-amber-700 dark:text-amber-500" />
+                <Award className="h-10 w-10 text-blue-600 dark:text-blue-500" />
               </motion.div>
               <div
-                className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-amber-100 dark:border-amber-800 cursor-pointer"
+                className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-blue-200 dark:border-blue-700 cursor-pointer"
                 onClick={() =>
                   topThree[2].email &&
                   router.push(
@@ -542,12 +549,12 @@ export default function FacultyLeaderboard() {
               {topThree[2].totalPoints} points
             </p>
             <motion.div
-              className="bg-amber-50 dark:bg-amber-900/20 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center"
+              className="bg-blue-50 dark:bg-blue-900/20 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center"
               initial={{ height: 0 }}
               animate={{ height: 96 }}
               transition={{ duration: 0.5, delay: 0.5 }}
             >
-              <p className="mb-2 text-xl font-bold text-amber-700 dark:text-amber-400">
+              <p className="mb-2 text-xl font-bold text-blue-700 dark:text-blue-400">
                 3
               </p>
             </motion.div>
@@ -870,58 +877,156 @@ export default function FacultyLeaderboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {/* Top Three Faculty Members */}
                 <AnimatePresence>
                   {!isFiltering &&
-                    remainingFaculty.map((faculty, index) => (
-                      <motion.tr
-                        key={faculty._id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{
-                          duration: 0.3,
-                          delay: index * 0.05,
-                          ease: "easeOut",
-                        }}
-                        className="cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-muted"
-                        onClick={() =>
-                          faculty.email &&
-                          router.push(
-                            `/profile/${encodeURIComponent(faculty.email)}`
-                          )
-                        }
-                      >
-                        <TableCell className="font-medium">
-                          {index + 4}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-border">
-                              <Image
-                                src={
-                                  faculty.profilePicture ||
-                                  "/placeholder.svg?height=150&width=150"
-                                }
-                                alt={faculty.name}
-                                fill
-                                className="object-cover"
-                              />
+                    topThree.map((faculty, index) => {
+                      const isCurrentUser = faculty.email === currentUserEmail;
+                      return (
+                        <motion.tr
+                          key={faculty._id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{
+                            duration: 0.3,
+                            delay: index * 0.05,
+                            ease: "easeOut",
+                          }}
+                          className={`cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-muted ${
+                            isCurrentUser
+                              ? "bg-teal-50 dark:bg-teal-900/20 border-l-4 border-teal-500"
+                              : ""
+                          }`}
+                          onClick={() =>
+                            faculty.email &&
+                            router.push(
+                              `/profile/${encodeURIComponent(faculty.email)}`
+                            )
+                          }
+                        >
+                          <TableCell className="font-medium">
+                            {index + 1}
+                            {index === 0 && (
+                              <Trophy className="h-4 w-4 text-yellow-500 dark:text-yellow-400 inline ml-1" />
+                            )}
+                            {index === 1 && (
+                              <Medal className="h-4 w-4 text-gray-400 dark:text-gray-500 inline ml-1" />
+                            )}
+                            {index === 2 && (
+                              <Award className="h-4 w-4 text-blue-600 dark:text-blue-400 inline ml-1" />
+                            )}
+                            {isCurrentUser && (
+                              <User className="h-4 w-4 text-teal-500 dark:text-teal-400 inline ml-1" />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="relative w-8 h-8 rounded-full overflow-hidden border border-border">
+                                <Image
+                                  src={
+                                    faculty.profilePicture ||
+                                    "/placeholder.svg?height=150&width=150"
+                                  }
+                                  alt={faculty.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                              {faculty.name}
+                              {isCurrentUser && (
+                                <Badge
+                                  variant="outline"
+                                  className="ml-2 bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 border-teal-200 dark:border-teal-800"
+                                >
+                                  You
+                                </Badge>
+                              )}
                             </div>
-                            {faculty.name}
-                          </div>
-                        </TableCell>
-                        <TableCell>{faculty.department}</TableCell>
-                        <TableCell className="text-right">
-                          {faculty.certifications?.length || 0}
-                        </TableCell>
-                        <TableCell className="text-right font-medium text-teal-600 dark:text-teal-400">
-                          {faculty.totalPoints}
-                        </TableCell>
-                      </motion.tr>
-                    ))}
+                          </TableCell>
+                          <TableCell>{faculty.department}</TableCell>
+                          <TableCell className="text-right">
+                            {faculty.certifications?.length || 0}
+                          </TableCell>
+                          <TableCell className="text-right font-medium text-teal-600 dark:text-teal-400">
+                            {faculty.totalPoints}
+                          </TableCell>
+                        </motion.tr>
+                      );
+                    })}
                 </AnimatePresence>
 
-                {remainingFaculty.length === 0 && (
+                {/* Remaining Faculty Members */}
+                <AnimatePresence>
+                  {!isFiltering &&
+                    remainingFaculty.map((faculty, index) => {
+                      const isCurrentUser = faculty.email === currentUserEmail;
+                      return (
+                        <motion.tr
+                          key={faculty._id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{
+                            duration: 0.3,
+                            delay: (index + 3) * 0.05,
+                            ease: "easeOut",
+                          }}
+                          className={`cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-muted ${
+                            isCurrentUser
+                              ? "bg-teal-50 dark:bg-teal-900/20 border-l-4 border-teal-500"
+                              : ""
+                          }`}
+                          onClick={() =>
+                            faculty.email &&
+                            router.push(
+                              `/profile/${encodeURIComponent(faculty.email)}`
+                            )
+                          }
+                        >
+                          <TableCell className="font-medium">
+                            {index + 4}
+                            {isCurrentUser && (
+                              <User className="h-4 w-4 text-teal-500 dark:text-teal-400 inline ml-1" />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="relative w-8 h-8 rounded-full overflow-hidden border border-border">
+                                <Image
+                                  src={
+                                    faculty.profilePicture ||
+                                    "/placeholder.svg?height=150&width=150"
+                                  }
+                                  alt={faculty.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                              {faculty.name}
+                              {isCurrentUser && (
+                                <Badge
+                                  variant="outline"
+                                  className="ml-2 bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 border-teal-200 dark:border-teal-800"
+                                >
+                                  You
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>{faculty.department}</TableCell>
+                          <TableCell className="text-right">
+                            {faculty.certifications?.length || 0}
+                          </TableCell>
+                          <TableCell className="text-right font-medium text-teal-600 dark:text-teal-400">
+                            {faculty.totalPoints}
+                          </TableCell>
+                        </motion.tr>
+                      );
+                    })}
+                </AnimatePresence>
+
+                {remainingFaculty.length === 0 && topThree.length === 0 && (
                   <TableRow>
                     <TableCell
                       colSpan={5}

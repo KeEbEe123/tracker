@@ -14,7 +14,6 @@ const teacherSchema = new mongoose.Schema({
       name: { type: String, required: true },
       issuingOrganization: { type: String, required: true },
       issueDate: { type: Date, required: true },
-      expiryDate: { type: Date },
       credentialId: { type: String },
       credentialUrl: { type: String },
       imageUrl: { type: String }, // URL to certification image
