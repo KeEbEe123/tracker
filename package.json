@@ -16,6 +16,7 @@
     "cloudinary": "^2.6.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.9.4",
+    "ldrs": "^1.1.7",
     "lucide-react": "^0.503.0",
     "mongoose": "^8.14.1",
     "next": "15.3.1",

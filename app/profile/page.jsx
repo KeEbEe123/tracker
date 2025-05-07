@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { NoCertifications } from "@/components/ui/NoCertifications";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -47,7 +48,6 @@ export default function ProfilePage() {
     name: "",
     issuingOrganization: "",
     issueDate: "",
-    expiryDate: "",
     credentialId: "",
     credentialUrl: "",
     imageUrl: "",
@@ -56,6 +56,9 @@ export default function ProfilePage() {
   const [imagePreview, setImagePreview] = useState(null);
   const [activeTab, setActiveTab] = useState("view");
   const [editingCert, setEditingCert] = useState(null);
+  const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false);
+  const [profileImageError, setProfileImageError] = useState("");
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -144,7 +147,6 @@ export default function ProfilePage() {
         name: "",
         issuingOrganization: "",
         issueDate: "",
-        expiryDate: "",
         credentialId: "",
         credentialUrl: "",
         imageUrl: "",
@@ -160,6 +162,13 @@ export default function ProfilePage() {
 
     setUploadingImage(true);
     try {
+      // Validate file type first
+      const validTypes = ["image/jpeg", "image/png", "image/jpg"];
+
+      if (!validTypes.includes(file.type)) {
+        throw new Error("Please upload a valid image (JPEG, JPG, or PNG only)");
+      }
+
       // Create FormData
       const formData = new FormData();
       formData.append("file", file);
@@ -185,8 +194,64 @@ export default function ProfilePage() {
       reader.readAsDataURL(file);
     } catch (error) {
       console.error("Error uploading image:", error);
+      // Display error to the user
+      alert(error.message || "Failed to upload image");
     } finally {
       setUploadingImage(false);
+    }
+  };
+
+  const handleProfilePictureUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Reset error state
+    setProfileImageError("");
+
+    // Check file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      setProfileImageError("File size exceeds 5MB limit");
+      return;
+    }
+
+    // Check file type
+    const validTypes = ["image/jpeg", "image/png", "image/jpg"];
+    if (!validTypes.includes(file.type)) {
+      setProfileImageError(
+        "Please upload a valid image (JPEG, JPG, or PNG only)"
+      );
+      return;
+    }
+
+    setUploadingProfilePicture(true);
+    try {
+      // Create FormData
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload/profile-picture", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to upload profile picture");
+      }
+
+      const data = await res.json();
+
+      // Update the teacher state with the new profile picture URL
+      setTeacher({
+        ...teacher,
+        profilePicture: data.url,
+      });
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      setProfileImageError(error.message || "Failed to upload profile picture");
+    } finally {
+      setUploadingProfilePicture(false);
     }
   };
 
@@ -232,7 +297,6 @@ export default function ProfilePage() {
         name: "",
         issuingOrganization: "",
         issueDate: "",
-        expiryDate: "",
         credentialId: "",
         credentialUrl: "",
         imageUrl: "",
@@ -267,12 +331,7 @@ export default function ProfilePage() {
           }}
           className="rounded-lg shadow-sm p-6 border border-border"
         >
-          <div
-            className="text-center"
-            style={{ color: "hsl(var(--muted-foreground))" }}
-          >
-            Loading...
-          </div>
+          <LoadingSpinner />
         </div>
       </div>
     );
@@ -321,13 +380,13 @@ export default function ProfilePage() {
                 <div>
                   <h1 className="text-2xl font-semibold">{teacher.name}</h1>
                   <p style={{ color: "hsl(var(--muted-foreground))" }}>
-                    {teacher.department}
+                    {teacher.designation} - {teacher.department}
                   </p>
                 </div>
                 <Button
                   variant="outline"
                   onClick={() => setEditing(!editing)}
-                  className="flex items-center gap-2 bg-slate-800 text-slate-100 hover:bg-slate-700"
+                  className="flex items-center gap-2 bg-slate-800 text-slate-100 hover:text-black"
                 >
                   <PenLine className="h-4 w-4" />
                   {editing ? "Cancel" : "Edit Profile"}
@@ -388,13 +447,43 @@ export default function ProfilePage() {
                     setFormData({ ...formData, contactNumber: e.target.value })
                   }
                 />
-                <Input
-                  label="Department"
-                  value={formData.department}
-                  onChange={(e) =>
-                    setFormData({ ...formData, department: e.target.value })
-                  }
-                />
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-1"
+                    style={{ color: "hsl(var(--foreground))" }}
+                  >
+                    Department
+                  </label>
+                  <select
+                    value={formData.department}
+                    onChange={(e) =>
+                      setFormData({ ...formData, department: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-transparent"
+                    style={{
+                      backgroundColor: "hsl(var(--background))",
+                      borderColor: "hsl(var(--input))",
+                      color: "hsl(var(--foreground))",
+                    }}
+                    required
+                  >
+                    <option value="">Select Department</option>
+                    <option value="IT">IT</option>
+                    <option value="CSE">CSE</option>
+                    <option value="CSE-AIML">CSE-AIML</option>
+                    <option value="CSDS">CSDS</option>
+                    <option value="CSE-Cyber Security">
+                      CSE-Cyber Security
+                    </option>
+                    <option value="ECE">ECE</option>
+                    <option value="EEE">EEE</option>
+                    <option value="MECH">MECH</option>
+                    <option value="AERO">AERO</option>
+                    <option value="CSIT">CSIT</option>
+                    <option value="MBA">MBA</option>
+                    <option value="H&S">H&S</option>
+                  </select>
+                </div>
                 <div>
                   <label
                     className="block text-sm font-medium mb-1"
@@ -514,18 +603,7 @@ export default function ProfilePage() {
                       required
                     />
                     <Input
-                      label="Expiry Date"
-                      type="date"
-                      value={newCertification.expiryDate}
-                      onChange={(e) =>
-                        setNewCertification({
-                          ...newCertification,
-                          expiryDate: e.target.value,
-                        })
-                      }
-                    />
-                    <Input
-                      label="Credential ID *"
+                      label="Credential ID"
                       value={newCertification.credentialId}
                       onChange={(e) =>
                         setNewCertification({
@@ -533,10 +611,10 @@ export default function ProfilePage() {
                           credentialId: e.target.value,
                         })
                       }
-                      required
+                      required={false}
                     />
                     <Input
-                      label="Credential URL *"
+                      label="Credential URL"
                       type="url"
                       value={newCertification.credentialUrl}
                       onChange={(e) =>
@@ -545,7 +623,7 @@ export default function ProfilePage() {
                           credentialUrl: e.target.value,
                         })
                       }
-                      required
+                      required={false}
                     />
                   </div>
 
@@ -565,7 +643,7 @@ export default function ProfilePage() {
                         <input
                           type="file"
                           className="hidden"
-                          accept="image/*,.pdf"
+                          accept="image/png,image/jpeg,image/jpg"
                           onChange={handleImageUpload}
                           disabled={uploadingImage}
                           required={!newCertification.imageUrl}
@@ -648,8 +726,6 @@ export default function ProfilePage() {
                                       issuingOrganization:
                                         cert.issuingOrganization,
                                       issueDate: cert.issueDate.split("T")[0],
-                                      expiryDate:
-                                        cert.expiryDate?.split("T")[0] || "",
                                       credentialId: cert.credentialId,
                                       credentialUrl: cert.credentialUrl,
                                       imageUrl: cert.imageUrl,
@@ -677,15 +753,6 @@ export default function ProfilePage() {
                                 Issued:{" "}
                                 {new Date(cert.issueDate).toLocaleDateString()}
                               </p>
-                              {cert.expiryDate && (
-                                <p className="flex items-center gap-1">
-                                  <Calendar className="h-3.5 w-3.5" />
-                                  Expires:{" "}
-                                  {new Date(
-                                    cert.expiryDate
-                                  ).toLocaleDateString()}
-                                </p>
-                              )}
                             </div>
                           </div>
                         </CardContent>
@@ -723,18 +790,39 @@ export default function ProfilePage() {
                 alt="Profile picture"
                 fill
                 className="object-cover"
-                priority
               />
             </div>
 
             <div className="mt-4 text-center">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg"
+                className="hidden"
+                onChange={handleProfilePictureUpload}
+                ref={fileInputRef}
+              />
               <Button
                 variant="outline"
                 size="sm"
-                className="text-sm bg-slate-800 text-slate-100 hover:bg-slate-700"
+                className="text-sm bg-slate-800 text-slate-100 hover:text-black"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingProfilePicture}
               >
-                Update Photo
+                {uploadingProfilePicture ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Update Photo
+                  </>
+                )}
               </Button>
+              {profileImageError && (
+                <p className="text-xs text-red-500 mt-2">{profileImageError}</p>
+              )}
             </div>
 
             <div className="mt-8 w-full">
@@ -800,7 +888,7 @@ export default function ProfilePage() {
   );
 }
 
-function Input({ label, value, onChange, type = "text" }) {
+function Input({ label, value, onChange, type = "text", required = false }) {
   return (
     <div>
       <label
@@ -819,7 +907,7 @@ function Input({ label, value, onChange, type = "text" }) {
           borderColor: "hsl(var(--input))",
           color: "hsl(var(--foreground))",
         }}
-        required
+        required={required}
       />
     </div>
   );

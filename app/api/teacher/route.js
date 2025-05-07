@@ -4,7 +4,8 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getTeacherModel } from "@/models/Teacher";
 
 // GET /api/teacher - Get the current user's teacher profile
-export async function GET() {
+// or GET /api/teacher?email=user@example.com - Get a teacher profile by email
+export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -13,13 +14,29 @@ export async function GET() {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    console.log("Looking up teacher for user ID:", session.user.id);
+    // Check if email parameter is provided in the query
+    const url = new URL(request.url);
+    const email = url.searchParams.get("email");
 
     const TeacherModel = await getTeacherModel();
-    const teacher = await TeacherModel.findOne({ userId: session.user.id });
+    let teacher;
+
+    if (email) {
+      // If email is provided, find by email
+      console.log("Looking up teacher by email:", email);
+      teacher = await TeacherModel.findOne({ email: email });
+    } else {
+      // Otherwise, get the current user's profile
+      console.log("Looking up teacher for user ID:", session.user.id);
+      teacher = await TeacherModel.findOne({ userId: session.user.id });
+    }
 
     if (!teacher) {
-      console.log("No teacher found for user ID:", session.user.id);
+      const searchParam = email || session.user.id;
+      console.log(
+        `No teacher found for ${email ? "email" : "user ID"}:`,
+        searchParam
+      );
       return NextResponse.json(
         { error: "Teacher profile not found" },
         { status: 404 }

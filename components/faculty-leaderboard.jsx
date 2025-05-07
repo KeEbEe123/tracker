@@ -14,11 +14,13 @@ import {
   Users,
   School,
   Zap,
+  User,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -51,12 +53,26 @@ export default function FacultyLeaderboard() {
   const [sortBy, setSortBy] = useState("totalPoints");
   const [sortOrder, setSortOrder] = useState("desc");
   const [isFiltering, setIsFiltering] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState("");
+
+  // ❌ Emails to exclude from leaderboard
+  const exemptedEmails = [
+    "23r21a1285@mlrit.ac.in",
+    "drrajasekhar@mlrinstitutions.ac.in",
+    "23r21a12b3@mlrit.ac.in",
+  ];
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/signin");
     }
   }, [status, router]);
+
+  useEffect(() => {
+    if (status === "authenticated" && session.user?.email) {
+      setCurrentUserEmail(session.user.email);
+    }
+  }, [status, session]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,10 +88,18 @@ export default function FacultyLeaderboard() {
         }
         const teachersList = await teachersRes.json();
 
-        // Add random improvement rate and recent achievement for demo if not present
-        const enhancedTeachers = teachersList.map((teacher) => {
+        const teachersNeedingUpdate = teachersList.filter(
+          (teacher) => !teacher.improvementRate || !teacher.recentAchievement
+        );
+
+        const updatedTeachers = [];
+        for (const teacher of teachersNeedingUpdate) {
+          let needsUpdate = false;
+          const updates = { ...teacher };
+
           if (!teacher.improvementRate) {
-            teacher.improvementRate = Math.floor(Math.random() * 20) + 1; // 1-20%
+            updates.improvementRate = Math.floor(Math.random() * 20) + 1;
+            needsUpdate = true;
           }
 
           if (
@@ -83,21 +107,52 @@ export default function FacultyLeaderboard() {
             teacher.certifications &&
             teacher.certifications.length > 0
           ) {
-            // Use the most recent certification as the recent achievement
             const latestCert = teacher.certifications.reduce((latest, cert) => {
               const certDate = new Date(cert.issueDate);
               return !latest || certDate > new Date(latest.issueDate)
                 ? cert
                 : latest;
             }, null);
-
-            teacher.recentAchievement = latestCert ? latestCert.name : null;
+            if (latestCert) {
+              updates.recentAchievement = latestCert.name;
+              needsUpdate = true;
+            }
           }
 
-          return teacher;
+          if (needsUpdate) {
+            try {
+              const updateRes = await fetch(
+                `/api/teacher/${teacher._id}/update`,
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    improvementRate: updates.improvementRate,
+                    recentAchievement: updates.recentAchievement,
+                  }),
+                }
+              );
+
+              if (updateRes.ok) {
+                const updatedTeacher = await updateRes.json();
+                updatedTeachers.push(updatedTeacher);
+              }
+            } catch {
+              updatedTeachers.push(updates);
+            }
+          }
+        }
+
+        const mergedTeachers = teachersList.map((teacher) => {
+          const updated = updatedTeachers.find((u) => u._id === teacher._id);
+          return updated || teacher;
         });
 
-        setTeachers(enhancedTeachers);
+        const filteredTeachers = mergedTeachers.filter(
+          (teacher) => !exemptedEmails.includes(teacher.email)
+        );
+
+        setTeachers(filteredTeachers);
 
         // Fetch departments
         const deptsRes = await fetch("/api/departments");
@@ -106,13 +161,12 @@ export default function FacultyLeaderboard() {
           setDepartments(deptsData);
         }
 
-        // Fetch upcoming certifications from the database
+        // Fetch certifications
         const certsRes = await fetch("/api/certification-links");
         if (certsRes.ok) {
           const certsData = await certsRes.json();
           setUpcomingCertifications(certsData);
         } else {
-          // Fallback to static data if API fails
           setUpcomingCertifications([
             {
               name: "Advanced Teaching Methods",
@@ -149,16 +203,13 @@ export default function FacultyLeaderboard() {
   if (status === "loading" || loading) {
     return (
       <div className="container mx-auto py-8 px-4">
-        <div className="text-center text-muted-foreground">Loading...</div>
+        <LoadingSpinner />
       </div>
     );
   }
 
-  if (status === "unauthenticated") {
-    return null;
-  }
+  if (status === "unauthenticated") return null;
 
-  // Get top 3 faculty members
   const topThree = [...teachers]
     .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
     .slice(0, 3);
@@ -174,12 +225,10 @@ export default function FacultyLeaderboard() {
     });
   }
 
-  // Get most improved faculty members
   const mostImproved = [...teachers]
     .sort((a, b) => b.improvementRate - a.improvementRate)
     .slice(0, 3);
 
-  // Get the rest of the faculty members (4th place and below)
   const remainingFaculty = [...teachers]
     .sort((a, b) => {
       if (sortBy === "totalPoints") {
@@ -201,7 +250,7 @@ export default function FacultyLeaderboard() {
       }
       return 0;
     })
-    .filter((_, index) => index >= 3) // Skip the top 3
+    .filter((_, index) => index >= 3)
     .filter(
       (faculty) =>
         faculty.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -211,7 +260,6 @@ export default function FacultyLeaderboard() {
   const handleSort = (column) => {
     setIsFiltering(true);
     setTimeout(() => setIsFiltering(false), 300);
-
     if (sortBy === column) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -220,18 +268,17 @@ export default function FacultyLeaderboard() {
     }
   };
 
-  // Calculate total stats
   const totalCertifications = teachers.reduce(
     (sum, teacher) =>
       sum + (teacher.certifications ? teacher.certifications.length : 0),
     0
   );
+
   const averageScore = Math.round(
     teachers.reduce((sum, teacher) => sum + (teacher.totalPoints || 0), 0) /
       (teachers.length || 1)
   );
 
-  // Format date for display
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -243,7 +290,7 @@ export default function FacultyLeaderboard() {
   return (
     <div className="container mx-auto py-6 px-4">
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
+        <h1 className="text-3xl font-bold">
           Faculty Certification Leaderboard
         </h1>
         <p className="text-slate-600 dark:text-slate-400 mt-2">
@@ -263,14 +310,17 @@ export default function FacultyLeaderboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                  Total Faculty
+                  Faculty Members
                 </p>
-                <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                  {teachers.length}
-                </h3>
+                <h3 className="text-2xl font-bold">{teachers.length}</h3>
               </div>
-              <div className="h-12 w-12 rounded-full bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center">
-                <Users className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+              <div
+                className="h-12 w-12 rounded-full flex items-center justify-center"
+                style={{
+                  backgroundColor: "var(--teal-bg-color, #f0fdfa)",
+                }}
+              >
+                <User className="h-6 w-6 text-teal-600 dark:text-teal-400" />
               </div>
             </div>
           </CardContent>
@@ -283,11 +333,14 @@ export default function FacultyLeaderboard() {
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                   Total Certifications
                 </p>
-                <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                  {totalCertifications}
-                </h3>
+                <h3 className="text-2xl font-bold">{totalCertifications}</h3>
               </div>
-              <div className="h-12 w-12 rounded-full bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
+              <div
+                className="h-12 w-12 rounded-full flex items-center justify-center"
+                style={{
+                  backgroundColor: "var(--indigo-bg-color, #eef2ff)",
+                }}
+              >
                 <Award className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
               </div>
             </div>
@@ -301,11 +354,14 @@ export default function FacultyLeaderboard() {
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                   Average Score
                 </p>
-                <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                  {averageScore}
-                </h3>
+                <h3 className="text-2xl font-bold">{averageScore}</h3>
               </div>
-              <div className="h-12 w-12 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+              <div
+                className="h-12 w-12 rounded-full flex items-center justify-center"
+                style={{
+                  backgroundColor: "var(--amber-bg-color, #eef2ff)",
+                }}
+              >
                 <BarChart3 className="h-6 w-6 text-amber-600 dark:text-amber-400" />
               </div>
             </div>
@@ -319,11 +375,14 @@ export default function FacultyLeaderboard() {
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                   Departments
                 </p>
-                <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                  {departments.length}
-                </h3>
+                <h3 className="text-2xl font-bold">{departments.length}</h3>
               </div>
-              <div className="h-12 w-12 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+              <div
+                className="h-12 w-12 rounded-full flex items-center justify-center"
+                style={{
+                  backgroundColor: "var(--blue-bg-color, #eff6ff)",
+                }}
+              >
                 <School className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
@@ -347,16 +406,8 @@ export default function FacultyLeaderboard() {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <div className="relative mb-3">
-              <motion.div
-                className="absolute -top-6 left-1/2 transform -translate-x-1/2"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.7 }}
-              >
-                <Medal className="h-10 w-10 text-gray-400 dark:text-gray-500" />
-              </motion.div>
               <div
-                className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-700 cursor-pointer"
+                className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-gray-500 dark:border-gray-600 cursor-pointer"
                 onClick={() =>
                   topThree[1].email &&
                   router.push(
@@ -375,24 +426,18 @@ export default function FacultyLeaderboard() {
                 />
               </div>
             </div>
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100">
-              {topThree[1].name}
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              {topThree[1].department}
-            </p>
+            <h3 className="font-semibold">{topThree[1].name}</h3>
+            <p className="text-sm">{topThree[1].department}</p>
             <p className="text-sm font-medium text-teal-600 dark:text-teal-400">
               {topThree[1].totalPoints} points
             </p>
             <motion.div
-              className="bg-gray-200 dark:bg-gray-700 h-32 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center"
+              className="bg-gray-500 dark:bg-gray-600 h-32 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center shadow-md"
               initial={{ height: 0 }}
               animate={{ height: 128 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <p className="mb-2 text-xl font-bold text-gray-700 dark:text-gray-300">
-                2
-              </p>
+              <p className="mb-2 text-2xl font-bold text-white">2</p>
             </motion.div>
           </motion.div>
 
@@ -404,16 +449,8 @@ export default function FacultyLeaderboard() {
             transition={{ duration: 0.5 }}
           >
             <div className="relative mb-3">
-              <motion.div
-                className="absolute -top-8 left-1/2 transform -translate-x-1/2"
-                initial={{ scale: 0, rotate: -30 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ duration: 0.5, delay: 0.5, type: "spring" }}
-              >
-                <Trophy className="h-12 w-12 text-yellow-500 dark:text-yellow-400" />
-              </motion.div>
               <div
-                className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-200 dark:border-yellow-700 cursor-pointer"
+                className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-500 dark:border-yellow-600 cursor-pointer"
                 onClick={() =>
                   topThree[0].email &&
                   router.push(
@@ -432,24 +469,18 @@ export default function FacultyLeaderboard() {
                 />
               </div>
             </div>
-            <h3 className="font-semibold text-lg text-slate-800 dark:text-slate-100">
-              {topThree[0].name}
-            </h3>
-            <p className="text-slate-600 dark:text-slate-400">
-              {topThree[0].department}
-            </p>
+            <h3 className="font-semibold text-ld">{topThree[0].name}</h3>
+            <p className="">{topThree[0].department}</p>
             <p className="text-md font-medium text-teal-600 dark:text-teal-400">
               {topThree[0].totalPoints} points
             </p>
             <motion.div
-              className="bg-yellow-100 dark:bg-yellow-900/30 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center border-t-4 border-yellow-300 dark:border-yellow-600"
+              className="bg-yellow-500 dark:bg-yellow-600 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center shadow-md"
               initial={{ height: 0 }}
               animate={{ height: 160 }}
               transition={{ duration: 0.7, delay: 0.1 }}
             >
-              <p className="mb-2 text-2xl font-bold text-yellow-700 dark:text-yellow-400">
-                1
-              </p>
+              <p className="mb-2 text-3xl font-bold text-white">1</p>
             </motion.div>
           </motion.div>
 
@@ -461,16 +492,8 @@ export default function FacultyLeaderboard() {
             transition={{ duration: 0.5, delay: 0.4 }}
           >
             <div className="relative mb-3">
-              <motion.div
-                className="absolute -top-6 left-1/2 transform -translate-x-1/2"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.9 }}
-              >
-                <Award className="h-10 w-10 text-amber-700 dark:text-amber-500" />
-              </motion.div>
               <div
-                className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-amber-100 dark:border-amber-800 cursor-pointer"
+                className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-blue-500 dark:border-blue-600 cursor-pointer"
                 onClick={() =>
                   topThree[2].email &&
                   router.push(
@@ -489,24 +512,18 @@ export default function FacultyLeaderboard() {
                 />
               </div>
             </div>
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100">
-              {topThree[2].name}
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              {topThree[2].department}
-            </p>
+            <h3 className="font-semibold">{topThree[2].name}</h3>
+            <p className="text-sm">{topThree[2].department}</p>
             <p className="text-sm font-medium text-teal-600 dark:text-teal-400">
               {topThree[2].totalPoints} points
             </p>
             <motion.div
-              className="bg-amber-50 dark:bg-amber-900/20 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center"
+              className="bg-blue-500 dark:bg-blue-600 w-full max-w-[180px] rounded-t-lg mt-3 flex items-end justify-center shadow-md"
               initial={{ height: 0 }}
               animate={{ height: 96 }}
               transition={{ duration: 0.5, delay: 0.5 }}
             >
-              <p className="mb-2 text-xl font-bold text-amber-700 dark:text-amber-400">
-                3
-              </p>
+              <p className="mb-2 text-2xl font-bold text-white">3</p>
             </motion.div>
           </motion.div>
         </motion.div>
@@ -553,12 +570,13 @@ export default function FacultyLeaderboard() {
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between items-center">
-                        <h4 className="font-medium text-slate-800 dark:text-slate-100">
-                          {faculty.name}
-                        </h4>
+                        <h4 className="font-medium">{faculty.name}</h4>
                         <Badge
                           variant="outline"
-                          className="bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/30"
+                          className="text-teal-700 dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/30"
+                          style={{
+                            backgroundColor: "var(--teal-bg-color, #f0fdfa)",
+                          }}
                         >
                           +{faculty.improvementRate}%
                         </Badge>
@@ -605,9 +623,7 @@ export default function FacultyLeaderboard() {
                 {departments.slice(0, 5).map((dept, index) => (
                   <div key={index} className="space-y-1">
                     <div className="flex justify-between items-center">
-                      <h4 className="font-medium text-slate-800 dark:text-slate-100">
-                        {dept.name}
-                      </h4>
+                      <h4 className="font-medium">{dept.name}</h4>
                       <div className="flex items-center gap-4">
                         <span className="text-sm text-slate-600 dark:text-slate-400">
                           {dept.totalCerts} certifications
@@ -655,7 +671,7 @@ export default function FacultyLeaderboard() {
                     .map((faculty) => (
                       <div
                         key={faculty._id}
-                        className="flex items-start gap-3 p-3 rounded-lg border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                        className="flex items-start gap-3 p-3 rounded-lg border border-slate-100 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                         onClick={() =>
                           faculty.email &&
                           router.push(
@@ -663,7 +679,7 @@ export default function FacultyLeaderboard() {
                           )
                         }
                       >
-                        <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-slate-100 dark:border-slate-700 flex-shrink-0">
+                        <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-red-100/50 dark:border-slate-700 flex-shrink-0">
                           <Image
                             src={
                               faculty.profilePicture ||
@@ -675,9 +691,7 @@ export default function FacultyLeaderboard() {
                           />
                         </div>
                         <div>
-                          <h4 className="font-medium text-slate-800 dark:text-slate-100">
-                            {faculty.name}
-                          </h4>
+                          <h4 className="font-medium">{faculty.name}</h4>
                           <p className="text-sm text-slate-500 dark:text-slate-400">
                             {faculty.department}
                           </p>
@@ -713,9 +727,6 @@ export default function FacultyLeaderboard() {
                 <Calendar className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 Upcoming Opportunities
               </CardTitle>
-              <CardDescription>
-                Certification programs opening soon
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -724,14 +735,14 @@ export default function FacultyLeaderboard() {
                     key={index}
                     className="border-l-2 border-indigo-200 dark:border-indigo-800 pl-3 py-1"
                   >
-                    <h4 className="font-medium text-slate-800 dark:text-slate-100">
+                    <h4 className="font-medium">
                       {cert.description || cert.name}
                     </h4>
                     <div className="flex justify-between items-center text-sm">
                       <p className="text-slate-500 dark:text-slate-400">
                         {cert.department}
                       </p>
-                      <p className="text-indigo-600 dark:text-indigo-400">
+                      <p className="text-red-600 dark:text-red-400">
                         {cert.lastDateToApply
                           ? formatDate(cert.lastDateToApply)
                           : cert.date}
@@ -770,9 +781,7 @@ export default function FacultyLeaderboard() {
         <Card>
           <CardContent className="p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
-                All Faculty Rankings
-              </h2>
+              <h2 className="text-xl font-semibold">All Faculty Rankings</h2>
               <div className="relative w-64">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
                 <Input
@@ -835,6 +844,7 @@ export default function FacultyLeaderboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {/* Top Three Faculty Members */}
                 <AnimatePresence>
                   {!isFiltering &&
                     remainingFaculty.map((faculty, index) => (
@@ -886,7 +896,7 @@ export default function FacultyLeaderboard() {
                     ))}
                 </AnimatePresence>
 
-                {remainingFaculty.length === 0 && (
+                {remainingFaculty.length === 0 && topThree.length === 0 && (
                   <TableRow>
                     <TableCell
                       colSpan={5}
