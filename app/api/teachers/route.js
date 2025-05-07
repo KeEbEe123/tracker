@@ -25,3 +25,34 @@ export async function GET() {
     );
   }
 }
+
+export async function POST() {
+  try {
+    const session = await getServerSession(authOptions);
+    const ADMIN_EMAILS = [
+      "siddhartht4206@gmail.com",
+      "23r21a12b3@mlrit.ac.in",
+      "23r21a1285@mlrit.ac.in",
+    ];
+    if (!session || !session.user || !ADMIN_EMAILS.includes(session.user.email)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const TeacherModel = await getTeacherModel();
+    const teachers = await TeacherModel.find({}).sort({ totalPoints: -1 });
+
+    // Assign ranks
+    for (let i = 0; i < teachers.length; i++) {
+      teachers[i].rank = i + 1;
+      await teachers[i].save();
+    }
+
+    return NextResponse.json({ message: "Ranks updated", count: teachers.length });
+  } catch (error) {
+    console.error("Error updating ranks:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

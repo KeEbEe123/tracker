@@ -160,7 +160,7 @@ export default function FacultyLeaderboard() {
 
   // Get top 3 faculty members
   const topThree = [...teachers]
-    .sort((a, b) => b.totalPoints - a.totalPoints)
+    .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
     .slice(0, 3);
 
   while (topThree.length < 3) {
@@ -857,7 +857,7 @@ export default function FacultyLeaderboard() {
                         }
                       >
                         <TableCell className="font-medium">
-                          {index + 4}
+                          {faculty.rank ?? index + 4}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">

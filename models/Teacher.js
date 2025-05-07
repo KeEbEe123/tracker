@@ -23,6 +23,7 @@ const teacherSchema = new mongoose.Schema({
   totalPoints: { type: Number, default: 0 },
   improvementRate: { type: Number, default: 0 }, // New field for improvement rate percentage
   recentAchievement: { type: String }, // New field for recent achievement
+  rank: { type: Number, default: null }, // Faculty rank
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

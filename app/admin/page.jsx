@@ -124,6 +124,23 @@ export default function AdminPage() {
     }
   };
 
+  const handleUpdateRanks = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/teachers", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update ranks");
+      toast.success("Ranks updated successfully");
+      // Optionally, refetch teachers to update UI
+      const teachersRes = await fetch("/api/teachers");
+      setTeachers(await teachersRes.json());
+    } catch (e) {
+      toast.error(e.message || "Failed to update ranks");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (status === "loading" || loading) {
     return (
       <div className="container mx-auto py-8 px-4 text-center">Loading...</div>
@@ -198,12 +215,14 @@ export default function AdminPage() {
           <CardContent className="p-6 min-h-[400px]">
             <TabsContent value="leaderboard" active={tab === "leaderboard"}>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Faculty Leaderboard
-                </h2>
-                <Button onClick={handleExportExcel} className="flex gap-2">
-                  Download Excel
-                </Button>
+                <div className="flex gap-2">
+                  <Button className="dark:bg-black dark:text-white bg-white text-black" onClick={handleExportExcel} variant="outline">
+                    Export Leaderboard
+                  </Button>
+                  <Button onClick={handleUpdateRanks} variant="default">
+                    Update Ranks
+                  </Button>
+                </div>
               </div>
               <FacultyLeaderboard adminMode teachers={teachers} />
             </TabsContent>
