@@ -27,5 +27,12 @@ export default function Home() {
     return null;
   }
 
-  return <FacultyLeaderboard />;
+  return (
+    <div className="container mx-auto py-8 px-4">
+      <div className="mb-6 p-4 bg-black border-l-4 border-blue-400 text-blue-800 rounded">
+        Note: The leaderboard is updated every day at 12 midnight. If your name isn't visible here, it will be updated by the next day.
+      </div>
+      <FacultyLeaderboard />
+    </div>
+  );
 }
