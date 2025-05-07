@@ -60,6 +60,7 @@ export default function ProfilePage() {
   const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false);
   const [profileImageError, setProfileImageError] = useState("");
   const fileInputRef = useRef(null);
+  const [patchNoteBanner, setPatchNoteBanner] = useState(null);
 
   // Add certification types constant
   const CERTIFICATION_TYPES = [
@@ -108,6 +109,13 @@ export default function ProfilePage() {
           return;
         }
 
+        // If patchNotes is present, alert and redirect to profile (only once)
+        if (data.patchNotes && !window.sessionStorage.getItem("patchNotesShown")) {
+          window.sessionStorage.setItem("patchNotesShown", "true");
+          alert(data.patchNotes);
+          router.push("/profile");
+        }
+
         setTeacher(data);
         setFormData({
           name: data.name,
@@ -126,6 +134,14 @@ export default function ProfilePage() {
       fetchTeacher();
     }
   }, [session, router]);
+
+  useEffect(() => {
+    const note = typeof window !== 'undefined' ? window.sessionStorage.getItem("patchNotes") : null;
+    if (note) {
+      setPatchNoteBanner(note);
+      window.sessionStorage.removeItem("patchNotes");
+    }
+  }, []);
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
@@ -377,6 +393,11 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      {patchNoteBanner && (
+        <div className="mb-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded">
+          {patchNoteBanner}
+        </div>
+      )}
       <div
         style={{
           backgroundColor: "hsl(var(--card))",
@@ -740,10 +761,7 @@ export default function ProfilePage() {
                         <CardContent className="p-0">
                           <div className="relative h-40 w-full">
                             <Image
-                              src={
-                                cert.imageUrl ||
-                                "/placeholder.svg?height=200&width=300"
-                              }
+                              src={cert.imageUrl || "/placeholder.svg?height=200&width=300"}
                               alt={cert.name}
                               fill
                               className="object-cover"
@@ -753,19 +771,71 @@ export default function ProfilePage() {
                             <div className="flex justify-between items-start">
                               <div>
                                 <h3 className="font-medium">{cert.name}</h3>
-                                <p className="text-sm text-muted-foreground">
-                                  {cert.issuingOrganization}
-                                </p>
+                                <p className="text-sm text-muted-foreground">{cert.issuingOrganization}</p>
                                 <p className="text-sm text-teal-600 dark:text-teal-400 mt-1">
-                                  {CERTIFICATION_TYPES.find(
-                                    (t) => t.value === cert.type
-                                  )?.label || "Other"}
-                                  (
-                                  {CERTIFICATION_TYPES.find(
-                                    (t) => t.value === cert.type
-                                  )?.points || 2}{" "}
-                                  points)
+                                  {(!cert.type || cert.type === "")
+                                    ? "No type"
+                                    : `${CERTIFICATION_TYPES.find((t) => t.value === cert.type)?.label || "Other"} (${CERTIFICATION_TYPES.find((t) => t.value === cert.type)?.points || 2} points)`}
                                 </p>
+                                {/* If type is missing, show dropdown and save button */}
+                                {(!cert.type || cert.type === "") && (
+                                  <div className="mt-2">
+                                    <form
+                                      onSubmit={async (e) => {
+                                        e.preventDefault();
+                                        setTeacher((prev) => ({
+                                          ...prev,
+                                          certifications: prev.certifications.map((c, i) =>
+                                            i === index ? { ...c, _updatingType: true } : c
+                                          ),
+                                        }));
+                                        const form = e.target;
+                                        const newType = form.elements["certType"].value;
+                                        try {
+                                          const res = await fetch(`/api/teacher/certifications/${cert._id}`, {
+                                            method: "PATCH",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ type: newType }),
+                                          });
+                                          const updated = await res.json();
+                                          setTeacher(updated);
+                                        } catch (err) {
+                                          alert("Failed to update certification type");
+                                          setTeacher((prev) => ({
+                                            ...prev,
+                                            certifications: prev.certifications.map((c, i) =>
+                                              i === index ? { ...c, _updatingType: false } : c
+                                            ),
+                                          }));
+                                        }
+                                      }}
+                                    >
+                                      <select
+                                        name="certType"
+                                        defaultValue=""
+                                        className="px-2 py-1 rounded border mr-2"
+                                        required
+                                      >
+                                        <option value="" disabled>
+                                          Select Type
+                                        </option>
+                                        {CERTIFICATION_TYPES.map((type) => (
+                                          <option key={type.value} value={type.value}>
+                                            {type.label} ({type.points} points)
+                                          </option>
+                                        ))}
+                                      </select>
+                                      <Button
+                                        type="submit"
+                                        size="sm"
+                                        className="bg-teal-600 text-white hover:bg-teal-700"
+                                        disabled={!!cert._updatingType}
+                                      >
+                                        {cert._updatingType ? "Saving..." : "Save Type"}
+                                      </Button>
+                                    </form>
+                                  </div>
+                                )}
                               </div>
                               <div className="flex gap-2">
                                 <Button
@@ -776,8 +846,7 @@ export default function ProfilePage() {
                                     setEditingCert(cert);
                                     setNewCertification({
                                       name: cert.name,
-                                      issuingOrganization:
-                                        cert.issuingOrganization,
+                                      issuingOrganization: cert.issuingOrganization,
                                       issueDate: cert.issueDate.split("T")[0],
                                       credentialId: cert.credentialId,
                                       credentialUrl: cert.credentialUrl,
@@ -792,9 +861,7 @@ export default function ProfilePage() {
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  onClick={() =>
-                                    handleDeleteCertification(cert._id)
-                                  }
+                                  onClick={() => handleDeleteCertification(cert._id)}
                                   className="h-8 w-8 text-red-500 hover:bg-red-50 border-red-200 hover:border-red-300"
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -804,8 +871,7 @@ export default function ProfilePage() {
                             <div className="mt-2 space-y-1 text-sm text-muted-foreground">
                               <p className="flex items-center gap-1">
                                 <Calendar className="h-3.5 w-3.5" />
-                                Issued:{" "}
-                                {new Date(cert.issueDate).toLocaleDateString()}
+                                Issued: {new Date(cert.issueDate).toLocaleDateString()}
                               </p>
                             </div>
                           </div>

@@ -43,7 +43,7 @@ export async function PATCH(request, context) {
     const isImageChanging = data.imageUrl && oldImageUrl !== data.imageUrl;
 
     // Update certification fields
-    teacher.certifications[certIndex] = {
+    const updatedCert = {
       ...teacher.certifications[certIndex],
       name: data.name,
       issuingOrganization: data.issuingOrganization,
@@ -53,6 +53,25 @@ export async function PATCH(request, context) {
       imageUrl: data.imageUrl,
     };
 
+    // If type is provided, update it and recalculate points
+    if (typeof data.type === "string") {
+      updatedCert.type = data.type;
+      // Points map must match the model
+      const pointsMap = {
+        fdp: 5,
+        global: 10,
+        webinar: 3,
+        online: 8,
+        other: 2,
+      };
+      updatedCert.points = pointsMap[data.type] || 2;
+    } else if (!updatedCert.type) {
+      // If type is missing, set to 'other' and points to 2
+      updatedCert.type = "other";
+      updatedCert.points = 2;
+    }
+
+    teacher.certifications[certIndex] = updatedCert;
     await teacher.save();
 
     // Delete the old image if it was changed and is an uploaded file

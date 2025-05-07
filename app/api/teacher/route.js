@@ -43,7 +43,27 @@ export async function GET(request) {
       );
     }
 
-    return NextResponse.json(teacher);
+    // Check for certifications with missing/empty type
+    let patchNotes = null;
+    if (teacher.certifications && teacher.certifications.some(cert => !cert.type || cert.type === "")) {
+      patchNotes = "Some of your certifications are missing a type. Please update them on your profile page.";
+    }
+
+    // Return complete teacher data
+    return NextResponse.json({
+      id: teacher._id,
+      userId: teacher.userId,
+      name: teacher.name,
+      email: teacher.email,
+      department: teacher.department,
+      contactNumber: teacher.contactNumber,
+      profilePicture: teacher.profilePicture,
+      certifications: teacher.certifications,
+      totalPoints: teacher.totalPoints,
+      createdAt: teacher.createdAt,
+      updatedAt: teacher.updatedAt,
+      patchNotes,
+    });
   } catch (error) {
     console.error("Error fetching teacher:", error);
     return NextResponse.json(
