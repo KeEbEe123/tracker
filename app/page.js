@@ -1,21 +1,22 @@
-"use client";
+// app/page.jsx or app/page.tsx
+'use client';
 
-import { useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import FacultyLeaderboard from "@/components/faculty-leaderboard";
+import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import FacultyLeaderboard from '@/components/faculty-leaderboard';
 
 export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin');
     }
   }, [status, router]);
 
-  if (status === "loading") {
+  if (status === 'loading') {
     return (
       <div className="container mx-auto py-8 px-4">
         <div className="text-center">Loading...</div>
@@ -23,13 +24,13 @@ export default function Home() {
     );
   }
 
-  if (status === "unauthenticated") {
+  if (status === 'unauthenticated') {
     return null;
   }
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="mb-6 p-4 bg-black border-l-4 border-blue-400 text-blue-800 rounded">
+      <div className="mb-6 p-4 bg-transparent dark:bg-blue-900 text-black dark:text-white border-l-4 border-blue-400 dark:border-blue-300 rounded">
         Note: The leaderboard is updated every day at 12 midnight. If your name isn't visible here, it will be updated by the next day.
       </div>
       <FacultyLeaderboard />
