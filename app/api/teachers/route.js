@@ -41,13 +41,24 @@ export async function POST() {
     const TeacherModel = await getTeacherModel();
     const teachers = await TeacherModel.find({}).sort({ totalPoints: -1 });
 
-    // Assign ranks
-    for (let i = 0; i < teachers.length; i++) {
-      teachers[i].rank = i + 1;
-      await teachers[i].save();
+    try {
+      if (teachers.length > 0) {
+        const bulkOps = teachers.map((teacher, i) => ({
+          updateOne: {
+            filter: { _id: teacher._id },
+            update: { $set: { rank: i + 1 } }
+          }
+        }));
+        await TeacherModel.bulkWrite(bulkOps);
+      }
+      return NextResponse.json({ message: "Ranks updated", count: teachers.length });
+    } catch (error) {
+      console.error("Error updating ranks:", error);
+      return NextResponse.json(
+        { error: "Internal server error" },
+        { status: 500 }
+      );
     }
-
-    return NextResponse.json({ message: "Ranks updated", count: teachers.length });
   } catch (error) {
     console.error("Error updating ranks:", error);
     return NextResponse.json(

@@ -30,6 +30,14 @@ import { Badge as UIBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
+const CERTIFICATION_TYPES = [
+  { value: "fdp", label: "FDP (Faculty Development Program)", points: 5 },
+  { value: "global", label: "Global Certification", points: 10 },
+  { value: "webinar", label: "Webinars/Workshops", points: 3 },
+  { value: "online", label: "Online Courses", points: 8 },
+  { value: "other", label: "Others", points: 2 },
+];
+
 export default function TeacherProfilePage({ params }) {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -319,6 +327,11 @@ export default function TeacherProfilePage({ params }) {
                         <p className="text-muted-foreground text-sm mb-3">
                           {currentCert.issuingOrganization}
                         </p>
+                        <p className="text-sm text-teal-600 dark:text-teal-400 mb-2">
+                          {(!currentCert.type || currentCert.type === "")
+                            ? "No type"
+                            : `${CERTIFICATION_TYPES.find((t) => t.value === currentCert.type)?.label || "Other"} (${CERTIFICATION_TYPES.find((t) => t.value === currentCert.type)?.points || 2} points)`}
+                        </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4 text-sm mb-4">
                           <div className="flex items-center gap-1 text-muted-foreground">
@@ -359,7 +372,7 @@ export default function TeacherProfilePage({ params }) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {teacher.certifications.map((cert, index) => (
                         <Card
-                          key={cert._id || index}
+                          key={cert._id ? `${cert._id}-${index}` : `cert-${index}`}
                           className="overflow-hidden"
                         >
                           <div className="relative h-40 w-full">
@@ -377,6 +390,11 @@ export default function TeacherProfilePage({ params }) {
                             <h3 className="font-medium">{cert.name}</h3>
                             <p className="text-sm text-muted-foreground mb-2">
                               {cert.issuingOrganization}
+                            </p>
+                            <p className="text-xs text-teal-600 dark:text-teal-400 mb-1">
+                              {(!cert.type || cert.type === "")
+                                ? "No type"
+                                : `${CERTIFICATION_TYPES.find((t) => t.value === cert.type)?.label || "Other"} (${CERTIFICATION_TYPES.find((t) => t.value === cert.type)?.points || 2} points)`}
                             </p>
                             <div className="flex justify-between text-xs">
                               <div className="flex items-center gap-1 text-muted-foreground">

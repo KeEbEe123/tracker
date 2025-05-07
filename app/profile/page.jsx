@@ -757,7 +757,7 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {teacher.certifications?.length > 0 ? (
                     teacher.certifications.map((cert, index) => (
-                      <Card key={cert._id || index} className="overflow-hidden">
+                      <Card key={cert._id ? `${cert._id}-${index}` : `cert-${index}`} className="overflow-hidden">
                         <CardContent className="p-0">
                           <div className="relative h-40 w-full">
                             <Image
