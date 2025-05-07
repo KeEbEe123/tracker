@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, FileText, Info } from "lucide-react";
+import { X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,29 +13,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-// Defines the current patch version - increment this when adding new patch notes
+// Patch version identifier
 const CURRENT_PATCH_VERSION = "1.0.1";
 
-export default function PatchNotesPopup() {
+export default function PatchNotesPopup({ alwaysShow = false }) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Check if user has already seen this patch version
-    const lastSeenPatch = localStorage.getItem("lastSeenPatchVersion");
-
-    if (!lastSeenPatch || lastSeenPatch !== CURRENT_PATCH_VERSION) {
-      // Show the popup if user hasn't seen this version
+    if (alwaysShow) {
       setIsVisible(true);
+    } else {
+      const lastSeenPatch = localStorage.getItem("lastSeenPatchVersion");
+      if (!lastSeenPatch || lastSeenPatch !== CURRENT_PATCH_VERSION) {
+        setIsVisible(true);
+      }
     }
-  }, []);
+  }, [alwaysShow]);
 
   const handleClose = () => {
-    // Store the current version in localStorage when user closes the popup
-    localStorage.setItem("lastSeenPatchVersion", CURRENT_PATCH_VERSION);
+    if (!alwaysShow) {
+      localStorage.setItem("lastSeenPatchVersion", CURRENT_PATCH_VERSION);
+    }
     setIsVisible(false);
   };
 
-  // Get current date in readable format
   const currentDate = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -46,7 +47,6 @@ export default function PatchNotesPopup() {
     <AnimatePresence>
       {isVisible && (
         <>
-          {/* Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.5 }}
@@ -54,8 +54,6 @@ export default function PatchNotesPopup() {
             className="fixed inset-0 bg-black z-40"
             onClick={handleClose}
           />
-
-          {/* Popup */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -86,21 +84,85 @@ export default function PatchNotesPopup() {
 
               <CardContent className="max-h-[60vh] overflow-y-auto">
                 <div className="space-y-6">
-                  {/* Latest update */}
                   <div className="space-y-3">
                     <h3 className="text-lg font-medium text-red-500">
                       ACTION REQUIRED
                     </h3>
                     <ul className="space-y-2">
                       <li className="flex gap-2">
-                        <span className="text-teal-600 dark:text-teal-500 flex-shrink-0">
-                          •
-                        </span>
+                        <span className="text-red-500 flex-shrink-0">⚠️</span>
                         <span>
                           All users who uploaded their certificates in pdf
                           format are requested to edit them and upload jpeg or
                           png only. We apologize for the inconvenience.
                         </span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-red-500 flex-shrink-0">⚠️</span>
+                        <div className="space-y-2">
+                          <span>
+                            All faculty are requested to edit their
+                            certification type and choose from one of the
+                            options as soon as possible:
+                          </span>
+                          <ul className="ml-4 space-y-1 text-sm">
+                            <li className="flex items-center gap-2">
+                              <span className="text-amber-600 dark:text-amber-500">
+                                •
+                              </span>
+                              <span>
+                                FDP (Faculty Development Program) -{" "}
+                                <span className="font-medium text-teal-600 dark:text-teal-500">
+                                  5 points
+                                </span>
+                              </span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="text-amber-600 dark:text-amber-500">
+                                •
+                              </span>
+                              <span>
+                                Global Certification -{" "}
+                                <span className="font-medium text-teal-600 dark:text-teal-500">
+                                  10 points
+                                </span>
+                              </span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="text-amber-600 dark:text-amber-500">
+                                •
+                              </span>
+                              <span>
+                                Webinars/Workshops -{" "}
+                                <span className="font-medium text-teal-600 dark:text-teal-500">
+                                  3 points
+                                </span>
+                              </span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="text-amber-600 dark:text-amber-500">
+                                •
+                              </span>
+                              <span>
+                                Online Courses -{" "}
+                                <span className="font-medium text-teal-600 dark:text-teal-500">
+                                  8 points
+                                </span>
+                              </span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="text-amber-600 dark:text-amber-500">
+                                •
+                              </span>
+                              <span>
+                                Others -{" "}
+                                <span className="font-medium text-teal-600 dark:text-teal-500">
+                                  2 points
+                                </span>
+                              </span>
+                            </li>
+                          </ul>
+                        </div>
                       </li>
                     </ul>
                   </div>
