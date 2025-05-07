@@ -73,6 +73,13 @@ export async function POST(req) {
       return new NextResponse("Failed to add certification", { status: 500 });
     }
 
+    // Fetch and save with Mongoose to recalculate totalPoints
+    const TeacherModel = await getTeacherModel();
+    const teacherDoc = await TeacherModel.findOne({ email: session.user.email });
+    if (teacherDoc) {
+      await teacherDoc.save();
+    }
+
     const updatedTeacher = await db
       .collection("teachers")
       .findOne({ email: session.user.email });

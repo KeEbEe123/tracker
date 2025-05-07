@@ -50,14 +50,20 @@ teacherSchema.pre("save", function (next) {
     other: 2,
   };
 
+  // Defensive: Ensure certifications is an array
+  if (!Array.isArray(this.certifications)) {
+    this.certifications = [];
+  }
+
   // Calculate points for each certification
   this.certifications.forEach((cert) => {
-    cert.points = pointsMap[cert.type] || 2;
+    if (!cert) return;
+    cert.points = cert.type ? (pointsMap[cert.type] ?? 0) : 0;
   });
 
   // Calculate total points
   this.totalPoints = this.certifications.reduce(
-    (sum, cert) => sum + cert.points,
+    (sum, cert) => sum + (cert?.points || 0),
     0
   );
   next();

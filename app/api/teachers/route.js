@@ -41,6 +41,43 @@ export async function POST() {
     const TeacherModel = await getTeacherModel();
     const teachers = await TeacherModel.find({}).sort({ totalPoints: -1 });
 
+    // Fix certificates with no type: set points to 0 for those
+    let updatedCerts = 0;
+    let updatedTeachers = 0;
+    let checkedCerts = 0;
+    console.log(`Found ${teachers.length} teachers in update ranks endpoint.`);
+    for (const teacher of teachers) {
+      let changed = false;
+      if (Array.isArray(teacher.certifications)) {
+        teacher.certifications.forEach((cert) => {
+          checkedCerts++;
+          if (cert) {
+            if (cert.points === undefined || cert.points === null) {
+              cert.points = 0;
+              changed = true;
+            }
+            if (!cert.type || cert.type === '') {
+              cert.points = 0;
+              changed = true;
+              updatedCerts++;
+            }
+          }
+        });
+      }
+      try {
+        await teacher.save(); // always recalc points
+        if (changed) updatedTeachers++;
+      } catch (err) {
+        console.error("Failed to save teacher in update ranks:", teacher._id, teacher.email, err);
+      }
+    }
+    console.log(`Checked ${checkedCerts} certificates across ${teachers.length} teachers. Updated ${updatedCerts} certificates in ${updatedTeachers} teachers.`);
+
+    // Recalculate totalPoints for all teachers
+    for (const teacher of teachers) {
+      await teacher.save(); // triggers pre-save middleware
+    }
+
     try {
       if (teachers.length > 0) {
         const bulkOps = teachers.map((teacher, i) => ({
@@ -51,7 +88,7 @@ export async function POST() {
         }));
         await TeacherModel.bulkWrite(bulkOps);
       }
-      return NextResponse.json({ message: "Ranks updated", count: teachers.length });
+      return NextResponse.json({ message: "Ranks updated and certificates fixed", count: teachers.length, updatedTeachers, updatedCerts, teachersChecked: teachers.length, certsChecked: checkedCerts });
     } catch (error) {
       console.error("Error updating ranks:", error);
       return NextResponse.json(

@@ -64,11 +64,10 @@ export async function PATCH(request, context) {
         online: 8,
         other: 2,
       };
-      updatedCert.points = pointsMap[data.type] || 2;
+      updatedCert.points = pointsMap[data.type] ?? 0;
     } else if (!updatedCert.type) {
-      // If type is missing, set to 'other' and points to 2
-      updatedCert.type = "other";
-      updatedCert.points = 2;
+      // If type is missing, set points to 0
+      updatedCert.points = 0;
     }
 
     teacher.certifications[certIndex] = updatedCert;
