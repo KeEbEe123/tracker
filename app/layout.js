@@ -4,7 +4,6 @@ import { Navbar } from "@/components/navbar";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { AuthProvider } from "@/providers/auth-provider";
 import { Toaster } from "sonner";
-import PatchNotesPopup from "@/components/PatchNotesPopup";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +32,6 @@ export default function RootLayout({ children }) {
               <Navbar />
               <main className="pt-24">
                 {children}
-                <PatchNotesPopup alwaysShow={true} />
                 <Toaster position="top-right" />
               </main>
             </div>
