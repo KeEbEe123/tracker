@@ -17,6 +17,13 @@ const teacherSchema = new mongoose.Schema({
       credentialId: { type: String },
       credentialUrl: { type: String },
       imageUrl: { type: String }, // URL to certification image
+      type: {
+        type: String,
+        required: true,
+        enum: ["fdp", "global", "webinar", "online", "other"],
+        default: "other",
+      },
+      points: { type: Number, required: true },
     },
   ],
   totalPoints: { type: Number, default: 0 },
@@ -33,9 +40,26 @@ teacherSchema.pre("save", function (next) {
   next();
 });
 
-// Middleware to calculate points
+// Middleware to calculate points based on certification type
 teacherSchema.pre("save", function (next) {
-  this.totalPoints = this.certifications.length * 10;
+  const pointsMap = {
+    fdp: 5,
+    global: 10,
+    webinar: 3,
+    online: 8,
+    other: 2,
+  };
+
+  // Calculate points for each certification
+  this.certifications.forEach((cert) => {
+    cert.points = pointsMap[cert.type] || 2;
+  });
+
+  // Calculate total points
+  this.totalPoints = this.certifications.reduce(
+    (sum, cert) => sum + cert.points,
+    0
+  );
   next();
 });
 

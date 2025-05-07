@@ -51,6 +51,7 @@ export default function ProfilePage() {
     credentialId: "",
     credentialUrl: "",
     imageUrl: "",
+    type: "",
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
@@ -59,6 +60,15 @@ export default function ProfilePage() {
   const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false);
   const [profileImageError, setProfileImageError] = useState("");
   const fileInputRef = useRef(null);
+
+  // Add certification types constant
+  const CERTIFICATION_TYPES = [
+    { value: "fdp", label: "FDP (Faculty Development Program)", points: 5 },
+    { value: "global", label: "Global Certification", points: 10 },
+    { value: "webinar", label: "Webinars/Workshops", points: 3 },
+    { value: "online", label: "Online Courses", points: 8 },
+    { value: "other", label: "Others", points: 2 },
+  ];
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -150,6 +160,7 @@ export default function ProfilePage() {
         credentialId: "",
         credentialUrl: "",
         imageUrl: "",
+        type: "",
       });
     } catch (error) {
       console.error("Error adding certification:", error);
@@ -300,6 +311,7 @@ export default function ProfilePage() {
         credentialId: "",
         credentialUrl: "",
         imageUrl: "",
+        type: "",
       });
       setImagePreview(null);
     } catch (error) {
@@ -590,6 +602,37 @@ export default function ProfilePage() {
                       }
                       required
                     />
+                    <div>
+                      <label
+                        className="block text-sm font-medium mb-1"
+                        style={{ color: "hsl(var(--foreground))" }}
+                      >
+                        Certification Type *
+                      </label>
+                      <select
+                        value={newCertification.type}
+                        onChange={(e) =>
+                          setNewCertification({
+                            ...newCertification,
+                            type: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-transparent"
+                        style={{
+                          backgroundColor: "hsl(var(--background))",
+                          borderColor: "hsl(var(--input))",
+                          color: "hsl(var(--foreground))",
+                        }}
+                        required
+                      >
+                        <option value="">Select Type</option>
+                        {CERTIFICATION_TYPES.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label} ({type.points} points)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                     <Input
                       label="Issue Date *"
                       type="date"
@@ -713,6 +756,16 @@ export default function ProfilePage() {
                                 <p className="text-sm text-muted-foreground">
                                   {cert.issuingOrganization}
                                 </p>
+                                <p className="text-sm text-teal-600 dark:text-teal-400 mt-1">
+                                  {CERTIFICATION_TYPES.find(
+                                    (t) => t.value === cert.type
+                                  )?.label || "Other"}
+                                  (
+                                  {CERTIFICATION_TYPES.find(
+                                    (t) => t.value === cert.type
+                                  )?.points || 2}{" "}
+                                  points)
+                                </p>
                               </div>
                               <div className="flex gap-2">
                                 <Button
@@ -729,6 +782,7 @@ export default function ProfilePage() {
                                       credentialId: cert.credentialId,
                                       credentialUrl: cert.credentialUrl,
                                       imageUrl: cert.imageUrl,
+                                      type: cert.type,
                                     });
                                   }}
                                   className="h-8 w-8 text-slate-800 hover:bg-slate-100"

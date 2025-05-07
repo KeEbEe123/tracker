@@ -2,55 +2,84 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getTeacherModel } from "@/models/Teacher";
+import clientPromise from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 
 // POST /api/teacher/certifications - Add a new certification
-export async function POST(request) {
+export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    if (!session) {
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const data = await request.json();
-    const TeacherModel = await getTeacherModel();
+    const body = await req.json();
+    const {
+      name,
+      issuingOrganization,
+      issueDate,
+      credentialId,
+      credentialUrl,
+      imageUrl,
+      type,
+    } = body;
 
-    const teacher = await TeacherModel.findOne({ userId: session.user.id });
+    if (!name || !issuingOrganization || !issueDate || !imageUrl || !type) {
+      return new NextResponse("Missing required fields", { status: 400 });
+    }
+
+    const client = await clientPromise;
+    const db = client.db();
+
+    // Calculate points based on certification type
+    const points =
+      {
+        fdp: 5,
+        global: 10,
+        webinar: 3,
+        online: 8,
+        other: 2,
+      }[type] || 2;
+
+    const teacher = await db
+      .collection("teachers")
+      .findOne({ email: session.user.email });
 
     if (!teacher) {
-      return NextResponse.json(
-        { error: "Teacher profile not found" },
-        { status: 404 }
-      );
+      return new NextResponse("Teacher not found", { status: 404 });
     }
 
-    // Validate required fields
-    if (!data.name || !data.issuingOrganization || !data.issueDate) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+    const newCertification = {
+      _id: new ObjectId(),
+      name,
+      issuingOrganization,
+      issueDate,
+      credentialId,
+      credentialUrl,
+      imageUrl,
+      type,
+      points,
+    };
+
+    const result = await db.collection("teachers").updateOne(
+      { email: session.user.email },
+      {
+        $push: { certifications: newCertification },
+        $inc: { totalPoints: points },
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return new NextResponse("Failed to add certification", { status: 500 });
     }
 
-    // Add new certification
-    teacher.certifications.push({
-      name: data.name,
-      issuingOrganization: data.issuingOrganization,
-      issueDate: data.issueDate,
-      credentialId: data.credentialId || null,
-      credentialUrl: data.credentialUrl || null,
-      imageUrl: data.imageUrl || null,
-    });
-
-    await teacher.save();
-
-    return NextResponse.json(teacher);
+    const updatedTeacher = await db
+      .collection("teachers")
+      .findOne({ email: session.user.email });
+    return NextResponse.json(updatedTeacher);
   } catch (error) {
     console.error("Error adding certification:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 

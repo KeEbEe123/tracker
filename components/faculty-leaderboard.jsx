@@ -354,7 +354,7 @@ export default function FacultyLeaderboard() {
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                   Average Score
                 </p>
-                <h3 className="text-2xl font-bold">{averageScore}</h3>
+                <h3 className="text-2xl font-bold">{averageScore / 10}</h3>
               </div>
               <div
                 className="h-12 w-12 rounded-full flex items-center justify-center"
@@ -846,6 +846,78 @@ export default function FacultyLeaderboard() {
               <TableBody>
                 {/* Top Three Faculty Members */}
                 <AnimatePresence>
+                  {!isFiltering &&
+                    topThree.map((faculty, index) => (
+                      <motion.tr
+                        key={faculty._id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{
+                          duration: 0.3,
+                          delay: index * 0.05,
+                          ease: "easeOut",
+                        }}
+                        className={`cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-muted ${
+                          faculty.email === currentUserEmail
+                            ? "bg-teal-50 dark:bg-teal-950/20 border-l-4 border-teal-500"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          faculty.email &&
+                          router.push(
+                            `/profile/${encodeURIComponent(faculty.email)}`
+                          )
+                        }
+                      >
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {index === 0 && (
+                              <Trophy className="h-5 w-5 text-yellow-500" />
+                            )}
+                            {index === 1 && (
+                              <Medal className="h-5 w-5 text-gray-500" />
+                            )}
+                            {index === 2 && (
+                              <Award className="h-5 w-5 text-blue-500" />
+                            )}
+                            {index + 1}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-border">
+                              <Image
+                                src={
+                                  faculty.profilePicture ||
+                                  "/placeholder.svg?height=150&width=150"
+                                }
+                                alt={faculty.name}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {faculty.name}
+                              {faculty.email === currentUserEmail && (
+                                <Badge variant="outline" className="text-xs">
+                                  You
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{faculty.department}</TableCell>
+                        <TableCell className="text-right">
+                          {faculty.certifications?.length || 0}
+                        </TableCell>
+                        <TableCell className="text-right font-medium text-teal-600 dark:text-teal-400">
+                          {faculty.totalPoints}
+                        </TableCell>
+                      </motion.tr>
+                    ))}
+
+                  {/* Remaining Faculty Members */}
                   {!isFiltering &&
                     remainingFaculty.map((faculty, index) => (
                       <motion.tr
