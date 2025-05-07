@@ -48,6 +48,10 @@ function SignInContent() {
           >
             {error === "AccessDenied"
               ? "You do not have permission to access this resource."
+              : error === "Use college email for login."
+              ? "Please use your official college/institute email address (ending with @mlrit.ac.in or @mlrinstitutions.ac.in) to sign in."
+              : error === "Student roll number emails are not allowed."
+              ? "Student roll number emails are not allowed. Please use your faculty email."
               : "An error occurred while signing in. Please try again."}
           </div>
         )}
