@@ -14,6 +14,7 @@ const TABS = [
   { label: "Faculty Leaderboard", value: "leaderboard" },
   { label: "All Certificates", value: "certificates" },
   { label: "Create Certification Link", value: "create" },
+  { label: "Blocked Logins", value: "blocked-logins" },
 ];
 
 const ADMIN_EMAILS = [
@@ -36,6 +37,7 @@ export default function AdminPage() {
   const [certLinkList, setCertLinkList] = useState([]);
   const [storedCertLinks, setStoredCertLinks] = useState([]);
   const [savingLink, setSavingLink] = useState(false);
+  const [blockedLogins, setBlockedLogins] = useState([]);
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -53,6 +55,14 @@ export default function AdminPage() {
         if (linksRes.ok) {
           const linksData = await linksRes.json();
           setStoredCertLinks(linksData);
+        }
+
+        // Fetch blocked logins (only if admin)
+        if (ADMIN_EMAILS.includes(session?.user?.email)) {
+          const blockedRes = await fetch("/api/blocked-logins");
+          if (blockedRes.ok) {
+            setBlockedLogins(await blockedRes.json());
+          }
         }
       } catch (e) {
         console.error("Error fetching data:", e);
@@ -443,6 +453,37 @@ export default function AdminPage() {
                   </div>
                 </div>
               )}
+            </TabsContent>
+            <TabsContent value="blocked-logins" active={tab === "blocked-logins"}>
+              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Blocked Login Attempts</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm border rounded-lg overflow-hidden">
+                  <thead className="bg-muted dark:bg-muted/40">
+                    <tr>
+                      <th className="px-3 py-2">Email</th>
+                      <th className="px-3 py-2">Reason</th>
+                      <th className="px-3 py-2">Attempted At</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {blockedLogins.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="text-center py-8 text-muted-foreground">
+                          No blocked login attempts found
+                        </td>
+                      </tr>
+                    ) : (
+                      blockedLogins.map((item, idx) => (
+                        <tr key={idx} className="border-b last:border-b-0">
+                          <td className="px-3 py-2">{item.email}</td>
+                          <td className="px-3 py-2">{item.reason}</td>
+                          <td className="px-3 py-2">{new Date(item.attemptedAt).toLocaleString()}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </TabsContent>
           </CardContent>
         </Card>
