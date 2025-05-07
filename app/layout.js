@@ -33,7 +33,7 @@ export default function RootLayout({ children }) {
               <Navbar />
               <main className="pt-24">
                 {children}
-                <PatchNotesPopup />
+                <PatchNotesPopup alwaysShow={true} />
                 <Toaster position="top-right" />
               </main>
             </div>
