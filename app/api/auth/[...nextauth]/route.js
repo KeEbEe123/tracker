@@ -30,30 +30,37 @@ export const authOptions = {
       return token;
     },
     async signIn({ user, account, profile }) {
+      console.log("[NextAuth signIn] Callback triggered");
       try {
         if (account.provider === "google") {
           const TeacherModel = await getTeacherModel();
           const BlockedLoginModel = await getBlockedLoginModel();
 
           const email = user.email;
-          const isAdmin = ADMIN_EMAILS.includes(email);
+          const isAdmin = ADMIN_EMAILS.some(admin => admin.toLowerCase() === email.toLowerCase());
           const allowedDomains = ["mlrit.ac.in", "mlrinstitutions.ac.in"];
           const emailDomain = email.split("@").pop();
           const isAllowedDomain = allowedDomains.some((d) => emailDomain === d);
-          const rollNumberPattern = /^[0-9]{2}[a-z0-9]{7}@mlrit\.ac\.in$/i;
+          const rollNumberPattern = /^[0-9]{2}[a-z0-9]{8}@mlrit\.ac\.in$/i;
+
+          console.log("[NextAuth signIn] Email:", email);
+          console.log("[NextAuth signIn] isAdmin:", isAdmin);
+          console.log("[NextAuth signIn] isAllowedDomain:", isAllowedDomain);
+          console.log("[NextAuth signIn] rollNumberPattern:", rollNumberPattern.test(email));
 
           // Block if not allowed domain and not admin
           if (!isAllowedDomain && !isAdmin) {
+            console.log("[NextAuth signIn] Blocked: Not a college domain");
             await BlockedLoginModel.create({
               email,
               reason: "Not a college domain",
             });
-            // Pass error to signIn page
             throw new Error("use_college_email");
           }
 
           // Block if roll number format (unless admin)
           if (rollNumberPattern.test(email) && !isAdmin) {
+            console.log("[NextAuth signIn] Blocked: Student roll number format");
             await BlockedLoginModel.create({
               email,
               reason: "Student roll number format",
@@ -65,6 +72,7 @@ export const authOptions = {
           const existingTeacher = await TeacherModel.findOne({
             userId: user.id,
           });
+          console.log("[NextAuth signIn] Allowed: Proceeding with sign in");
           return true;
         }
         return true;

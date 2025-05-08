@@ -250,7 +250,7 @@ export default function FacultyLeaderboard() {
       }
       return 0;
     })
-    .filter((_, index) => index >= 3)
+    .filter((_, index) => index > 3)
     .filter(
       (faculty) =>
         faculty.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -919,6 +919,7 @@ export default function FacultyLeaderboard() {
 
                   {/* Remaining Faculty Members */}
                   {!isFiltering &&
+                  
                     remainingFaculty.map((faculty, index) => (
                       <motion.tr
                         key={faculty._id}
