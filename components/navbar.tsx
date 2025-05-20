@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, useScroll } from "framer-motion";
 import { ThemeToggle } from "./theme-toggle";
 import { useSession, signOut } from "next-auth/react";
+import { ADMIN_EMAILS } from "@/utils/adminEmails";
 
 declare global {
   interface Window {
@@ -42,6 +43,11 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const isAdmin =
+    status === "authenticated" &&
+    typeof session?.user?.email === "string" &&
+    ADMIN_EMAILS.includes(session.user.email);
+
   const navItems: NavItem[] = [
     { name: "Home", link: "/", icon: <Home className="h-4 w-4" /> },
     { name: "Profile", link: "/profile", icon: <User className="h-4 w-4" /> },
@@ -50,6 +56,9 @@ export function Navbar() {
       link: "/contact",
       icon: <MessageSquare className="h-4 w-4" />,
     },
+    ...(isAdmin
+      ? [{ name: "Admin", link: "/admin", icon: <User className="h-4 w-4" /> }]
+      : []),
   ];
 
   const handleSignOut = () => {
